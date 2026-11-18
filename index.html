@@ -510,7 +510,7 @@ const ADMIN_UID = "MyOR6llc8QfULylvCCiAtQ2o1uG3";
     const res = S.results || {};
     const rows = [...S.entries.values()].map(e => { const sc = scoreEntry(e, res); return { e, sc, tot: totalOf(sc) }; });
     rows.sort((a, b) => b.tot - a.tot || displayName(a.e).localeCompare(displayName(b.e)));
-    const anyRes = S.results && Object.values(S.results).some(v => v != null && v !== "" && !(Array.isArray(v) && !v.length));
+    const anyRes = S.results && ["champ","podium","topAm","topFr","lead5k","teamChamp","teamSecond","trophy","top10","time","score","us"].some(k => { const v = S.results[k]; return v != null && v !== "" && !(Array.isArray(v) && !v.length); });
     let h = "";
     if (!locked()) h += `<div class="note">Everyone's picks stay hidden until the 11:10 lock. You can see who's in.</div>`;
     else if (!anyRes) h += `<div class="note">Picks are locked. Points appear as results come in.</div>`;
