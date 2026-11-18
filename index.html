@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Terre Haute Pick'em</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Race-bib look: paper bib, heavy condensed numerals, safety-orange flag, turf green. Mobile-first single column. */
+:root {
+  --bg: #eef1ec;
+  --surface: #ffffff;
+  --ink: #15201a;
+  --muted: #5b6a61;
+  --line: #d3dbd4;
+  --accent: #df5a12;
+  --accent-ink: #ffffff;
+  --turf: #2c6a3a;
+  --turf-soft: #e1eee3;
+  --warn-soft: #fbe9dd;
+  --miss: #9aa59e;
+  --display: "Barlow Condensed", "Arial Narrow", Arial, sans-serif;
+  --body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1511; --surface: #16201a; --ink: #e6ede8; --muted: #9db0a3; --line: #2a3a30;
+    --accent: #ff7a33; --accent-ink: #1a0d05; --turf: #73c486; --turf-soft: #1c3223; --warn-soft: #3a2416; --miss: #5e6e64;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1511; --surface: #16201a; --ink: #e6ede8; --muted: #9db0a3; --line: #2a3a30;
+  --accent: #ff7a33; --accent-ink: #1a0d05; --turf: #73c486; --turf-soft: #1c3223; --warn-soft: #3a2416; --miss: #5e6e64;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.45; -webkit-text-size-adjust: 100%; }
+.wrap { max-width: 720px; margin: 0 auto; padding: 0 16px 120px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; letter-spacing: .01em; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* header bib */
+.bib { margin: 16px 0 12px; background: var(--surface); border: 2px solid var(--ink); border-radius: 10px; padding: 14px 16px 12px; position: relative; overflow: hidden; }
+.bib::before, .bib::after { content: ""; position: absolute; top: 10px; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--ink); background: var(--bg); }
+.bib::before { left: 10px; } .bib::after { right: 10px; }
+.bib .eyebrow { font-family: var(--display); font-weight: 700; text-transform: uppercase; color: var(--accent); letter-spacing: .08em; font-size: 14px; text-align: center; padding: 0 22px; }
+.bib h1 { font-size: clamp(40px, 11vw, 64px); line-height: .95; text-align: center; font-weight: 800; text-transform: uppercase; }
+.bib .meta { text-align: center; color: var(--muted); font-size: 14px; margin-top: 4px; }
+.strip { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; border-top: 2px dashed var(--line); padding-top: 10px; }
+.strip div { text-align: center; }
+.strip b { display: block; font-family: var(--display); font-size: 26px; line-height: 1; font-weight: 800; }
+.strip span { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+
+nav.tabs { display: flex; gap: 6px; overflow-x: auto; padding: 4px 0 12px; position: sticky; top: 0; background: var(--bg); z-index: 5; }
+nav.tabs a { flex: 0 0 auto; text-decoration: none; color: var(--ink); font-family: var(--display); font-weight: 700; font-size: 16px; text-transform: uppercase; letter-spacing: .04em; padding: 6px 12px; border-radius: 999px; border: 2px solid var(--line); background: var(--surface); }
+nav.tabs a[aria-current="page"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+.note { background: var(--warn-soft); border-radius: 8px; padding: 10px 12px; font-size: 14px; margin-bottom: 12px; }
+.note.ok { background: var(--turf-soft); }
+.field-row { display: grid; gap: 6px; margin-bottom: 12px; }
+label.lbl { font-weight: 600; font-size: 14px; }
+input[type="text"], input[type="number"], select { font: inherit; padding: 10px 12px; border-radius: 8px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); width: 100%; }
+
+/* category cards */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+.card-h { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
+.card-h .no { font-family: var(--display); font-weight: 800; font-size: 28px; color: var(--accent); line-height: 1; min-width: 34px; }
+.card-h h2 { font-size: 24px; font-weight: 700; text-transform: uppercase; }
+.card .how { color: var(--muted); font-size: 14px; margin: 0 0 10px; }
+.opts { display: grid; gap: 6px; }
+.opt { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; text-align: left; width: 100%; padding: 9px 12px; border-radius: 8px; border: 2px solid var(--line); background: var(--surface); cursor: pointer; }
+.opt:hover { border-color: var(--muted); }
+.opt[aria-pressed="true"] { border-color: var(--accent); background: var(--warn-soft); }
+.opt[disabled] { cursor: default; opacity: .65; }
+.opt .who { font-weight: 600; }
+.opt .sub { display: block; font-size: 13px; color: var(--muted); font-weight: 400; }
+.pill { font-family: var(--display); font-weight: 800; font-size: 20px; line-height: 1; min-width: 56px; text-align: right; font-variant-numeric: tabular-nums; }
+.pill small { font-size: 12px; font-weight: 700; color: var(--muted); margin-left: 2px; }
+.more { margin-top: 8px; background: none; border: 0; color: var(--turf); font-weight: 700; cursor: pointer; padding: 6px 0; }
+.ou-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 6px 0 10px; }
+.ou-line output { font-family: var(--display); font-weight: 800; font-size: 34px; line-height: 1; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.ou-sides { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ou-ticks { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+
+.savebar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 2px solid var(--ink); z-index: 10; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); }
+.savebar .in { max-width: 720px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
+.savebar .sum { flex: 1; font-size: 14px; color: var(--muted); }
+.savebar .sum b { color: var(--ink); }
+.btn { font-family: var(--display); font-weight: 800; font-size: 20px; text-transform: uppercase; letter-spacing: .04em; border: 0; border-radius: 8px; padding: 10px 18px; background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+.btn[disabled] { opacity: .5; cursor: default; }
+.btn.ghost { background: transparent; color: var(--ink); border: 2px solid var(--line); }
+
+/* leaderboard */
+.lb { display: grid; gap: 8px; }
+.lb-row { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.lb-top { display: grid; grid-template-columns: 40px 1fr auto; gap: 10px; align-items: center; padding: 12px 14px; width: 100%; text-align: left; background: none; border: 0; cursor: pointer; }
+.lb-top .rk { font-family: var(--display); font-weight: 800; font-size: 28px; color: var(--muted); }
+.lb-row.first .rk { color: var(--accent); }
+.lb-top .nm { font-weight: 700; font-size: 18px; }
+.lb-top .nm small { display: block; font-weight: 400; font-size: 13px; color: var(--muted); }
+.lb-top .tot { font-family: var(--display); font-weight: 800; font-size: 32px; font-variant-numeric: tabular-nums; }
+.lb-detail { border-top: 1px dashed var(--line); padding: 8px 14px 12px; }
+.brk { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; font-size: 14px; }
+.brk .k { color: var(--muted); }
+.brk .v { text-align: right; font-variant-numeric: tabular-nums; }
+.st { display: inline-block; width: 18px; text-align: center; font-weight: 800; }
+.st.hit { color: var(--turf); } .st.miss { color: var(--miss); } .st.pending { color: var(--muted); }
+.tag { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 2px 6px; border-radius: 4px; background: var(--warn-soft); color: var(--accent); margin-left: 6px; vertical-align: middle; }
+
+/* tables */
+.tbl-wrap { overflow-x: auto; margin: 0 -4px 16px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { padding: 7px 6px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { font-family: var(--display); text-transform: uppercase; letter-spacing: .05em; font-size: 14px; color: var(--muted); white-space: nowrap; }
+td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+td .sub { display: block; color: var(--muted); font-size: 12px; }
+.sec-h { font-size: 26px; text-transform: uppercase; margin: 20px 0 6px; }
+.prose p, .prose li { max-width: 65ch; }
+.prose h2 { font-size: 24px; text-transform: uppercase; margin: 18px 0 6px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.checks { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.checks label { display: flex; gap: 6px; align-items: center; font-size: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; }
+@media (prefers-reduced-motion: no-preference) { .opt, .btn { transition: border-color .12s, background-color .12s; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="bib">
+    <div class="eyebrow">NCAA DI Cross Country · Men's 10K</div>
+    <h1>Terre Haute Pick'em</h1>
+    <div class="meta">LaVern Gibson Course · Sat Nov 21 · gun 11:10 a.m. ET</div>
+    <div class="strip">
+      <div><b id="s-lock" class="num">—</b><span id="s-lock-l">until lock</span></div>
+      <div><b id="s-entries" class="num">0</b><span>entries</span></div>
+      <div><b id="s-pot" class="num">$0</b><span>pot</span></div>
+    </div>
+  </header>
+  <nav class="tabs" id="tabs" aria-label="Sections"></nav>
+  <main id="main"></main>
+</div>
+<div class="savebar" id="savebar" hidden>
+  <div class="in"><div class="sum" id="savesum"></div><button class="btn" id="savebtn" type="button">Save picks</button></div>
+</div>
+<script>
+// ===== Data + scoring core (shared by page and tests) =====
+const LOCK_AT = Date.UTC(2026, 10, 21, 16, 10, 0); // Sat Nov 21, 11:10 a.m. ET (men's gun)
+const BUY_IN = 5;
+
+// p = Claude's estimated probability. Points = W * sqrt((1-p)/p), min 1.
+function pts(W, p) {
+  p = Math.min(Math.max(p, 0.002), 0.995);
+  return Math.max(1, Math.round(W * Math.sqrt((1 - p) / p)));
+}
+
+const W = { champ: 10, podium: 5, topAm: 8, topFr: 8, lead5k: 6, teamChamp: 10, teamSecond: 8, trophy: 4, darkHorse: 8, time: 10, score: 10, us: 8 };
+
+// Individual contenders. win = P(win), top3 = P(top 3), k5 = P(leading at the 5K split)
+const RUNNERS = [
+  { id: "ekipruto", name: "Elsingi Kipruto", team: "Louisville", yr: "SO", note: "ACC champ in a meet record (beat Hansen by 6.5 sec); won SE Regional by 16 sec in 28:20; 3rd at Nuttycombe; 2nd at McNichols on this course", win: .15, top3: .42, k5: .09 },
+  { id: "mkipruto", name: "Meshack Kipruto", team: "Colorado", yr: "FR", note: "Won Nuttycombe in a course record; 4th at Big 12; rested at regionals. LetsRun's pick to win", win: .13, top3: .36, k5: .04 },
+  { id: "hansen", name: "Rocky Hansen", team: "Wake Forest", yr: "SR", us: true, note: "2025 NCAA runner-up; 2nd at ACC; 4th at Nuttycombe; sat out regionals (no reason given)", win: .10, top3: .30, k5: .10 },
+  { id: "kcheruiyot", name: "Kelvin Cheruiyot", team: "Florida", yr: "SO", note: "Two-time SEC champ (course record); won South Regional; beat Elsingi at McNichols on this course; 6th at Nuttycombe", win: .07, top3: .24, k5: .05 },
+  { id: "kitonga", name: "Pasanjo Kitonga", team: "New Mexico", yr: "FR", note: "2nd at Nuttycombe by 0.7 sec; 3rd at Mountain Regional", win: .075, top3: .26, k5: .07 },
+  { id: "kipchoge", name: "Solomon Kipchoge", team: "Washington St.", yr: "JR", note: "3rd at 2025 NCAAs; won West Regional by 12 sec; 9th at Nuttycombe", win: .075, top3: .25, k5: .06 },
+  { id: "musau", name: "Brian Musau", team: "Oklahoma St.", yr: "SR", note: "4th at 2025 NCAAs; won Midwest Regional; 3rd at Big 12", win: .055, top3: .21, k5: .05 },
+  { id: "kipngetich", name: "Denis Kipngetich", team: "Oklahoma St.", yr: "SR", note: "Big 12 champ; 2nd at Midwest Regional; 6th at 2025 NCAAs", win: .045, top3: .18, k5: .04 },
+  { id: "kimaru", name: "Titus Kimaru", team: "Texas Tech", yr: "SO", note: "Won Mountain Regional ahead of the New Mexico pack; 40th at 2025 NCAAs", win: .035, top3: .14, k5: .05 },
+  { id: "birnbaum", name: "Simeon Birnbaum", team: "Oregon", yr: "JR", us: true, note: "Big Ten champ; NCAA 1500 champ and record holder (3:31.69); packed in 10th at West Regional; 33rd at 2025 NCAAs", win: .03, top3: .12, k5: .02 },
+  { id: "griggs", name: "Nick Griggs", team: "Oregon", yr: "JR", note: "Irish ex-pro (13:05 5K, 8th in the European Championships 5000); 2025 European U23 XC champ; expected to debut Saturday if his knee is cleared", win: .03, top3: .11, k5: .02 },
+  { id: "kiprotich", name: "Collins Kiprotich", team: "New Mexico", yr: "JR", note: "2nd at Mountain Regional; 8th at Nuttycombe and 2025 NCAAs", win: .025, top3: .10, k5: .03 },
+  { id: "lokira", name: "Dismus Lokira", team: "Alabama", yr: "JR", note: "2nd at SEC; 11th at 2025 NCAAs; skipped regionals", win: .015, top3: .07, k5: .04 },
+  { id: "busienei", name: "Nick Busienei", team: "Arkansas", yr: "FR", note: "Won South Central Regional; 5th at SEC; SEC indoor 5000 champ", win: .015, top3: .07, k5: .02 },
+  { id: "kiptanui", name: "Silas Kiptanui", team: "Tulane", yr: "SO", note: "Won Pre-Nats on this course; NCAA steeple runner-up", win: .015, top3: .07, k5: .02 },
+  { id: "serem", name: "Dominic Serem", team: "Colorado", yr: "JR", note: "2nd at Big 12; 4th at Mountain Regional", win: .015, top3: .07, k5: .02 },
+  { id: "couttie", name: "George Couttie", team: "Virginia Tech", yr: "SR", note: "3rd at ACC; 2nd at SE Regional; 10th at 2025 NCAAs", win: .012, top3: .06, k5: .03 },
+  { id: "minatum", name: "Rodgers Minatum", team: "Alabama", yr: "FR", note: "3rd at SEC", win: .01, top3: .05, k5: .015 },
+  { id: "dkipruto", name: "Dennis Kipruto", team: "Alabama", yr: "JR", note: "4th at SEC; 2nd at South Regional; 26th at 2025 NCAAs", win: .01, top3: .05, k5: .015 },
+  { id: "kiplagat", name: "Evans Kiplagat", team: "New Mexico", yr: "SR", note: "7th at Nuttycombe", win: .01, top3: .045, k5: .015 },
+  { id: "kurui", name: "Evans Kurui", team: "Washington St.", yr: "JR", note: "2nd at West Regional; 13th at Nuttycombe", win: .008, top3: .04, k5: .015 },
+  { id: "erraouy", name: "Taha Er Raouy", team: "Eastern Kentucky", yr: "SR", note: "3rd at SE Regional; 10th at Nuttycombe; tends to push early", win: .008, top3: .04, k5: .04 },
+  { id: "kitchen", name: "Tayvon Kitchen", team: "BYU", yr: "SO", us: true, note: "5th at Nuttycombe; ran sick at regionals", win: .006, top3: .03, k5: .015 },
+  { id: "elkipruto", name: "Elkana Kipruto", team: "Wichita St.", yr: "JR", note: "2nd at Pre-Nats on this course; 24th at 2025 NCAAs", win: .006, top3: .03, k5: .015 },
+  { id: "kipchirchir", name: "Nicholas Kipchirchir", team: "Wichita St.", yr: "SR", note: "3rd at Pre-Nats; 4th at Midwest Regional", win: .005, top3: .025, k5: .01 },
+  { id: "setek", name: "Nelson Setek", team: "Tennessee", yr: "SO", note: "6th at SEC; 11th at Nuttycombe", win: .005, top3: .025, k5: .01 },
+  { id: "kogei", name: "Nickson Kogei", team: "Louisville", yr: "SO", note: "4th at ACC; 5th at SE Regional", win: .004, top3: .02, k5: .01 },
+  { id: "gituku", name: "Duncan Gituku", team: "Alabama", yr: "SO", note: "13:03 5K on the track; 7th at South Regional", win: .004, top3: .02, k5: .01 },
+  { id: "bera", name: "Robin Kwemoi Bera", team: "Iowa St.", yr: "JR", note: "7th at Midwest Regional; 15th at 2025 NCAAs", win: .004, top3: .02, k5: .01 },
+  { id: "redouane", name: "Zouhair Redouane", team: "Tennessee", yr: "SR", note: "12th at Nuttycombe", win: .003, top3: .015, k5: .01 },
+  { id: "echeruiyot", name: "Ernest Cheruiyot", team: "Arkansas", yr: "SR", note: "2nd at South Central Regional; 7th at SEC", win: .003, top3: .015, k5: .01 },
+  { id: "kipchumba", name: "Jean Kipchumba", team: "Missouri", yr: "FR", note: "3rd at Midwest Regional; 8th at SEC", win: .003, top3: .015, k5: .01 },
+  { id: "kipkosgei", name: "Fredrick Kipkosgei", team: "Hofstra", yr: "SR", note: "Won Northeast Regional; 38th at 2025 NCAAs", win: .003, top3: .015, k5: .01 },
+  { id: "ackley", name: "Daelen Ackley", team: "Notre Dame", yr: "SR", us: true, note: "4th at Pre-Nats on this course; 4th at Great Lakes Regional", win: .003, top3: .015, k5: .01 },
+  { id: "misgina", name: "Kidus Misgina", team: "Ole Miss", yr: "SR", us: true, note: "3rd at South Regional; led late at SEC before fading to 10th", win: .002, top3: .012, k5: .025 },
+  { id: "ejenkins", name: "Evan Jenkins", team: "Oregon", yr: "SR", us: true, note: "3rd at Big Ten", win: .002, top3: .01, k5: .01 },
+  { id: "moiben", name: "Michael Moiben", team: "Texas A&M", yr: "FR", note: "3rd at South Central Regional", win: .002, top3: .01, k5: .01 },
+  { id: "kiprop", name: "Patrick Kiprop", team: "Toledo", yr: "JR", note: "2nd at Great Lakes Regional", win: .002, top3: .01, k5: .01 },
+  { id: "habler", name: "Bailey Habler", team: "Villanova", yr: "JR", note: "Won Mid-Atlantic Regional; 6th at Pre-Nats", win: .002, top3: .01, k5: .01 },
+  { id: "bird", name: "Edward Bird", team: "Kentucky", yr: "SR", note: "5th at Pre-Nats; 6th at SE Regional", win: .002, top3: .01, k5: .01 },
+  { id: "radja", name: "Aurelien Radja", team: "Wake Forest", yr: "JR", note: "4th at SE Regional", win: .002, top3: .01, k5: .01 },
+  { id: "noakes", name: "Archie Noakes", team: "Wisconsin", yr: "SR", note: "2nd at Big Ten; 29th at Great Lakes Regional", win: .0015, top3: .008, k5: .008 },
+  { id: "hogan", name: "Myles Hogan", team: "Oregon", yr: "SR", us: true, note: "45th at 2025 NCAAs (Princeton); 7th at West Regional", win: .0015, top3: .008, k5: .008 },
+  { id: "ihedengren", name: "Isaac Hedengren", team: "BYU", yr: "JR", us: true, note: "7th at Mountain Regional (sick)", win: .0015, top3: .008, k5: .008 },
+  { id: "zegarski", name: "William Zegarski", team: "Butler", yr: "SR", us: true, note: "Won Great Lakes Regional; 19th at Nuttycombe", win: .0015, top3: .008, k5: .01 },
+  { id: "leonard", name: "Caden Leonard", team: "North Carolina", yr: "FR", us: true, note: "ACC Freshman of the Year (9th); 19th at Pre-Nats; 9th at SE Regional", win: .001, top3: .006, k5: .008 },
+];
+// normalize: listed runners hold 98.5% of the win chance, podium chances sum to 2.92, 5K-leader chances to 0.75
+(function () {
+  const sw = RUNNERS.reduce((a, r) => a + r.win, 0);
+  const s3 = RUNNERS.reduce((a, r) => a + r.top3, 0);
+  const s5 = RUNNERS.reduce((a, r) => a + r.k5, 0);
+  RUNNERS.forEach(r => { r.win = r.win * 0.985 / sw; r.top3 = Math.min(r.top3 * 2.92 / s3, 0.6); r.k5 = r.k5 * 0.75 / s5; });
+  RUNNERS.sort((a, b) => b.win - a.win);
+})();
+const FIELD_WIN = 1 - RUNNERS.reduce((a, r) => a + r.win, 0);
+const FIELD_K5 = 0.25;
+
+const norm = (list, total) => { const t = list.reduce((a, r) => a + r.p, 0); list.forEach(r => r.p = r.p * total / t); return list; };
+const AMERICANS = norm([
+  ["hansen", "Rocky Hansen", "Wake Forest", .45], ["birnbaum", "Simeon Birnbaum", "Oregon", .17], ["kitchen", "Tayvon Kitchen", "BYU", .08],
+  ["ackley", "Daelen Ackley", "Notre Dame", .05], ["misgina", "Kidus Misgina", "Ole Miss", .04], ["ihedengren", "Isaac Hedengren", "BYU", .03],
+  ["zegarski", "William Zegarski", "Butler", .03], ["ejenkins", "Evan Jenkins", "Oregon", .025], ["hogan", "Myles Hogan", "Oregon", .02],
+  ["leonard", "Caden Leonard", "North Carolina", .015], ["westphal", "Thomas Westphal", "Michigan St.", .015], ["asmith", "Aiden Smith", "Oregon", .015],
+  ["gavenas", "Tam Gavenas", "Harvard", .015], ["ctodd", "Cameron Todd", "Notre Dame", .01], ["gabelman", "Ben Gabelman", "Syracuse", .01],
+  ["harriman", "Birhanu Harriman", "Georgetown", .01], ["nenow", "Jacob Nenow", "Princeton", .01], ["sullivan", "CJ Sullivan", "Villanova", .01],
+  ["givens", "Isaiah Givens", "Colorado", .008], ["liebert", "Jake Liebert", "Colorado", .008], ["eike", "Dane Eike", "Navy", .008], ["echohawk", "Tayson Echohawk", "Oregon", .008], ["leroux", "Erik Le Roux", "Northern Arizona", .005],
+].map(([id, name, team, p]) => ({ id, name, team, p })), 0.975);
+const FRESHMEN = norm([
+  ["mkipruto", "Meshack Kipruto", "Colorado", .36], ["kitonga", "Pasanjo Kitonga", "New Mexico", .28], ["minatum", "Rodgers Minatum", "Alabama", .12],
+  ["busienei", "Nick Busienei", "Arkansas", .10], ["kipchumba", "Jean Kipchumba", "Missouri", .05], ["moiben", "Michael Moiben", "Texas A&M", .03],
+  ["muchiri", "Eliud Muchiri", "Florida", .02], ["kipkirui", "Eloshas Kipkirui", "Toledo", .01], ["leonard", "Caden Leonard", "North Carolina", .01],
+  ["graffeo", "Jack Graffeo", "Colorado", .005], ["kipkurgat", "Shadrack Kipkurgat", "Jacksonville St.", .005],
+].map(([id, name, team, p]) => ({ id, name, team, p })), 0.98);
+const FIELD_AM = 1 - AMERICANS.reduce((a, r) => a + r.p, 0);
+const FIELD_FR = 1 - FRESHMEN.reduce((a, r) => a + r.p, 0);
+
+// Teams: rank = Nov 16 USTFCCCA poll. win, second, top4 (trophy), top10
+const TEAMS = [
+  ["unm", "New Mexico", 1, .49, .25, .92, .995], ["colo", "Colorado", 2, .22, .30, .88, .99], ["okst", "Oklahoma St.", 3, .17, .25, .85, .98],
+  ["bama", "Alabama", 4, .035, .07, .42, .90], ["oregon", "Oregon", 5, .04, .07, .42, .90], ["byu", "BYU", 6, .015, .03, .22, .80],
+  ["florida", "Florida", 7, .005, .01, .08, .55], ["iast", "Iowa St.", 8, .005, .01, .08, .55], ["wake", "Wake Forest", 9, .005, .005, .06, .50],
+  ["ark", "Arkansas", 10, .005, .005, .05, .45], ["cuse", "Syracuse", 11, .002, .005, .02, .45], ["harvard", "Harvard", 12, .0005, .001, .01, .25],
+  ["gtown", "Georgetown", 13, .0005, .001, .005, .20], ["nova", "Villanova", 14, .0005, .001, .005, .22], ["nd", "Notre Dame", 15, .0005, .001, .005, .22],
+  ["wisc", "Wisconsin", 16, 0, 0, 0, .10], ["eku", "Eastern Kentucky", 17, 0, 0, 0, .15], ["vt", "Virginia Tech", 18, 0, 0, 0, .12],
+  ["stanford", "Stanford", 19, 0, 0, 0, .08], ["nau", "Northern Arizona", 20, 0, 0, 0, .10], ["msu", "Michigan St.", 21, 0, 0, 0, .06],
+  ["toledo", "Toledo", 22, 0, 0, 0, .10], ["tulane", "Tulane", 23, 0, 0, 0, .12], ["tenn", "Tennessee", 24, 0, 0, 0, .08],
+  ["minn", "Minnesota", 25, 0, 0, 0, .04], ["uw", "Washington", 26, 0, 0, 0, .05], ["wichita", "Wichita St.", 27, 0, 0, 0, .06],
+  ["arizona", "Arizona", 28, 0, 0, 0, .03], ["butler", "Butler", 29, 0, 0, 0, .03], ["michigan", "Michigan", 30, 0, 0, 0, .02],
+  ["portland", "Portland", 31, 0, 0, 0, .02], ["princeton", "Princeton", 32, 0, 0, 0, .03],
+].map(([id, name, rank, win, second, top4, top10]) => ({ id, name, rank, win, second, top4, top10 }));
+const CHAMP_TEAMS = TEAMS.filter(t => t.rank <= 11);
+const TROPHY_TEAMS = TEAMS.filter(t => t.top4 > 0);
+const DARK_HORSES = TEAMS.filter(t => t.rank >= 11);
+const FIELD_TEAM_WIN = 1 - CHAMP_TEAMS.reduce((a, t) => a + t.win, 0);
+const FIELD_TEAM_SECOND = 1 - CHAMP_TEAMS.reduce((a, t) => a + t.second, 0);
+
+// Over/under models
+function normCdf(z) { // Abramowitz-Stegun
+  const t = 1 / (1 + 0.2316419 * Math.abs(z));
+  const d = 0.3989423 * Math.exp(-z * z / 2);
+  const q = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+  return z > 0 ? 1 - q : q;
+}
+const OU = {
+  time: { label: "Winning individual time", unit: "time", min: 1690, max: 1780, step: 5, def: 1740, mean: 1740, sd: 25,
+    overText: "Slower than", underText: "Faster than",
+    pOver: x => 1 - normCdf((x - 1740) / 25) },
+  score: { label: "Winning team score", unit: "pts", min: 40, max: 160, step: 5, def: 85, overText: "More than", underText: "Fewer than",
+    pOver: x => 1 - normCdf(Math.log(x / 85) / 0.38) },
+  us: { label: "American-born runners in the top 40", unit: "runners", min: 4.5, max: 14.5, step: 1, def: 9.5, overText: "More than", underText: "Fewer than",
+    pOver: x => 1 - normCdf((x - 10) / 2.7) },
+};
+function ouPoints(key, line, side) {
+  const pO = OU[key].pOver(line);
+  return pts(W[key], side === "over" ? pO : 1 - pO);
+}
+function fmtTime(s) { const m = Math.floor(s / 60); const r = s - m * 60; return m + ":" + (r < 10 ? "0" : "") + (Number.isInteger(r) ? r : r.toFixed(1)); }
+function parseTime(str) {
+  const m = String(str || "").trim().match(/^(\d{1,2}):(\d{2}(?:\.\d+)?)$/);
+  return m ? Math.round(((+m[1]) * 60 + parseFloat(m[2])) * 10) / 10 : null;
+}
+
+// ---- points tables ----
+const byId = (list, id) => list.find(x => x.id === id);
+const PTS = {
+  champ: id => id === "field" ? pts(W.champ, FIELD_WIN) : pts(W.champ, byId(RUNNERS, id).win),
+  podium: id => pts(W.podium, byId(RUNNERS, id).top3),
+  topAm: id => id === "field" ? pts(W.topAm, FIELD_AM) : pts(W.topAm, byId(AMERICANS, id).p),
+  topFr: id => id === "field" ? pts(W.topFr, FIELD_FR) : pts(W.topFr, byId(FRESHMEN, id).p),
+  lead5k: id => id === "field" ? pts(W.lead5k, FIELD_K5) : pts(W.lead5k, byId(RUNNERS, id).k5),
+  teamChamp: id => id === "field" ? pts(W.teamChamp, FIELD_TEAM_WIN) : pts(W.teamChamp, byId(TEAMS, id).win),
+  teamSecond: id => id === "field" ? pts(W.teamSecond, FIELD_TEAM_SECOND) : pts(W.teamSecond, byId(TEAMS, id).second),
+  trophy: id => pts(W.trophy, byId(TEAMS, id).top4),
+  darkHorse: id => pts(W.darkHorse, byId(TEAMS, id).top10),
+};
+
+// ---- scoring ----
+// returns array of {key, label, pts, status: hit|miss|pending|push|none}
+function scoreEntry(pk, res) {
+  res = res || {};
+  const out = [];
+  const one = (key, label, pick, resVal) => {
+    if (!pick) return out.push({ key, label, pts: 0, status: "none" });
+    if (resVal == null || resVal === "") return out.push({ key, label, pts: 0, status: "pending" });
+    const hit = pick === resVal;
+    out.push({ key, label, pts: hit ? PTS[key](pick) : 0, status: hit ? "hit" : "miss" });
+  };
+  const many = (key, label, picks, resArr) => {
+    picks = (picks || []).filter(Boolean);
+    if (!picks.length) return out.push({ key, label, pts: 0, status: "none" });
+    if (!Array.isArray(resArr) || !resArr.length) return out.push({ key, label, pts: 0, status: "pending" });
+    let p = 0, hits = 0;
+    picks.forEach(id => { if (resArr.includes(id)) { p += PTS[key](id); hits++; } });
+    out.push({ key, label, pts: p, status: hits ? "hit" : "miss", hits, of: picks.length });
+  };
+  const ou = (key, label, line, side, actual) => {
+    if (line == null || !side) return out.push({ key, label, pts: 0, status: "none" });
+    if (actual == null || actual === "") return out.push({ key, label, pts: 0, status: "pending" });
+    if (actual === line) return out.push({ key, label, pts: 0, status: "push" });
+    const wentOver = actual > line;
+    const hit = (side === "over") === wentOver;
+    out.push({ key, label, pts: hit ? ouPoints(key, line, side) : 0, status: hit ? "hit" : "miss" });
+  };
+  one("champ", "Individual champ", pk.champ, res.champ);
+  many("podium", "Podium", pk.podium, res.podium);
+  one("topAm", "Top American", pk.topAm, res.topAm);
+  one("topFr", "Top freshman", pk.topFr, res.topFr);
+  one("lead5k", "5K leader", pk.lead5k, res.lead5k);
+  one("teamChamp", "Team champ", pk.teamChamp, res.teamChamp);
+  one("teamSecond", "Team runner-up", pk.teamSecond, res.teamSecond);
+  many("trophy", "Trophy teams", pk.trophy, res.trophy);
+  one("darkHorse", "Dark horse", pk.darkHorse, res.top10 && res.top10.length ? (res.top10.includes(pk.darkHorse) ? pk.darkHorse : "__miss") : null);
+  ou("time", "Winning time", pk.timeLine, pk.timeSide, res.time);
+  ou("score", "Team score", pk.scoreLine, pk.scoreSide, res.score);
+  ou("us", "US-born in top 40", pk.usLine, pk.usSide, res.us);
+  return out;
+}
+function totalOf(rows) { return rows.reduce((a, r) => a + r.pts, 0); }
+
+
+const FIREBASE_CONFIG = {apiKey:"AIzaSyD_z-pHLSwp2Hh5yhUEe2ayBKr4TZ9FpbY",authDomain:"xc-pickem.firebaseapp.com",projectId:"xc-pickem",storageBucket:"xc-pickem.firebasestorage.app",messagingSenderId:"370970546265",appId:"1:370970546265:web:d324eb443f6c510fdce148"};
+const ADMIN_UID = "";
+</script>
+<script>
+(function () {
+  "use strict";
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const locked = () => Date.now() >= LOCK_AT;
+
+  const defaultDraft = () => ({ nick: "", champ: null, podium: [], topAm: null, topFr: null, lead5k: null, teamChamp: null, teamSecond: null, trophy: [], darkHorse: null,
+    timeLine: OU.time.def, timeSide: null, scoreLine: OU.score.def, scoreSide: null, usLine: OU.us.def, usSide: null });
+  const S = { db: null, user: null, uid: null, isOwner: false, entries: new Map(), results: null, draft: defaultDraft(), dirty: false, loadedMine: false,
+    expanded: {}, open: {}, tab: "picks", names: {}, conn: "connecting", saveMsg: "", saving: false, readOnly: false };
+  try { const d = JSON.parse(localStorage.getItem("thpe-draft") || "null"); if (d) { S.draft = Object.assign(defaultDraft(), d); S.dirty = true; } } catch (e) {}
+  const keepDraft = () => { try { localStorage.setItem("thpe-draft", JSON.stringify(S.draft)); } catch (e) {} };
+
+  // ---------- labels ----------
+  const runnerName = id => id === "field" ? "Field (anyone not listed)" : ((byId(RUNNERS, id) || byId(AMERICANS, id) || byId(FRESHMEN, id) || {}).name || "—");
+  const teamName = id => id === "field" ? "Field (any other team)" : ((byId(TEAMS, id) || {}).name || "—");
+  function pickText(key, pk) {
+    switch (key) {
+      case "champ": case "topAm": case "topFr": case "lead5k": return pk[key] ? runnerName(pk[key]) : "—";
+      case "podium": return (pk.podium || []).map(runnerName).join(", ") || "—";
+      case "teamChamp": case "teamSecond": case "darkHorse": return pk[key] ? teamName(pk[key]) : "—";
+      case "trophy": return (pk.trophy || []).map(teamName).join(", ") || "—";
+      case "time": return pk.timeSide ? (pk.timeSide === "under" ? "Faster than " : "Slower than ") + fmtTime(pk.timeLine) : "—";
+      case "score": return pk.scoreSide ? (pk.scoreSide === "under" ? "Fewer than " : "More than ") + pk.scoreLine : "—";
+      case "us": return pk.usSide ? (pk.usSide === "under" ? "Fewer than " : "More than ") + pk.usLine : "—";
+    }
+    return "—";
+  }
+  const KEYS = ["champ", "podium", "topAm", "topFr", "lead5k", "teamChamp", "teamSecond", "trophy", "darkHorse", "time", "score", "us"];
+  function filledCount(d) {
+    let n = 0;
+    if (d.champ) n++; if ((d.podium || []).length === 3) n++; if (d.topAm) n++; if (d.topFr) n++; if (d.lead5k) n++;
+    if (d.teamChamp) n++; if (d.teamSecond) n++; if ((d.trophy || []).length === 4) n++; if (d.darkHorse) n++;
+    if (d.timeSide) n++; if (d.scoreSide) n++; if (d.usSide) n++;
+    return n;
+  }
+  function maxHaul(d) {
+    let t = 0;
+    if (d.champ) t += PTS.champ(d.champ);
+    (d.podium || []).forEach(id => t += PTS.podium(id));
+    if (d.topAm) t += PTS.topAm(d.topAm); if (d.topFr) t += PTS.topFr(d.topFr); if (d.lead5k) t += PTS.lead5k(d.lead5k);
+    if (d.teamChamp) t += PTS.teamChamp(d.teamChamp); if (d.teamSecond) t += PTS.teamSecond(d.teamSecond);
+    (d.trophy || []).forEach(id => t += PTS.trophy(id)); if (d.darkHorse) t += PTS.darkHorse(d.darkHorse);
+    if (d.timeSide) t += ouPoints("time", d.timeLine, d.timeSide); if (d.scoreSide) t += ouPoints("score", d.scoreLine, d.scoreSide); if (d.usSide) t += ouPoints("us", d.usLine, d.usSide);
+    return t;
+  }
+
+  // ---------- header + tabs ----------
+  function renderHeader() {
+    const ms = LOCK_AT - Date.now();
+    if (ms > 0) {
+      const d = Math.floor(ms / 864e5), h = Math.floor(ms / 36e5) % 24, m = Math.floor(ms / 6e4) % 60;
+      $("#s-lock").textContent = d > 0 ? d + "d " + h + "h" : h + "h " + String(m).padStart(2, "0") + "m";
+      $("#s-lock-l").textContent = "until lock";
+    } else { $("#s-lock").textContent = "Locked"; $("#s-lock-l").textContent = "picks"; }
+    const n = S.entries.size;
+    $("#s-entries").textContent = n;
+    $("#s-pot").textContent = "$" + n * BUY_IN;
+  }
+  function renderTabs() {
+    const tabs = [["picks", "My picks"], ["board", "Leaderboard"], ["odds", "Odds"], ["rules", "Rules"]];
+    if (S.isOwner || S.tab === "results") tabs.push(["results", "Results"]);
+    $("#tabs").innerHTML = tabs.map(([id, t]) => `<a href="#${id}" ${S.tab === id ? 'aria-current="page"' : ""}>${t}</a>`).join("");
+  }
+
+  // ---------- picks ----------
+  function optBtn(act, val, title, sub, points, pressed, disabled) {
+    return `<button type="button" class="opt" data-act="${act}" data-val="${esc(val)}" aria-pressed="${pressed}" ${disabled ? "disabled" : ""}>
+      <span class="who">${esc(title)}${sub ? `<span class="sub">${esc(sub)}</span>` : ""}</span><span class="pill">${points}<small>pts</small></span></button>`;
+  }
+  function listCard(no, key, title, how, items, opts) {
+    const d = S.draft, dis = locked() || S.readOnly;
+    const limit = opts.limit || 10;
+    const isMulti = !!opts.multi;
+    const sel = id => isMulti ? (d[key] || []).includes(id) : d[key] === id;
+    const showAll = S.expanded[key] || items.findIndex(i => sel(i.id)) >= limit;
+    const vis = showAll ? items : items.slice(0, limit);
+    let html = `<section class="card" id="c-${key}"><div class="card-h"><span class="no">${no}</span><h2>${title}</h2></div><p class="how">${how}</p><div class="opts">`;
+    html += vis.map(i => optBtn(isMulti ? "toggle" : "pick", key + "|" + i.id, i.title, i.sub, i.pts, sel(i.id), dis)).join("");
+    html += `</div>`;
+    if (items.length > limit) html += `<button type="button" class="more" data-act="expand" data-val="${key}">${showAll ? "Show fewer" : "Show all " + items.length}</button>`;
+    return html + `</section>`;
+  }
+  function ouCard(no, key) {
+    const o = OU[key], d = S.draft, dis = locked() || S.readOnly;
+    const line = d[key + "Line"], side = d[key + "Side"];
+    const fmt = v => o.unit === "time" ? fmtTime(v) : v;
+    return `<section class="card" id="c-${key}"><div class="card-h"><span class="no">${no}</span><h2>${o.label}</h2></div>
+      <p class="how">${key === "time" ? "Slide the line, then pick a side. A bolder line pays more if it hits." : key === "score" ? "Lower score wins in cross country. Slide the line, then pick a side." : "US-born runners finishing 1st–40th (All-Americans). Slide the line, then pick a side."}</p>
+      <div class="ou-line"><output id="ol-${key}" class="num">${fmt(line)}</output><span class="how" style="margin:0">line</span></div>
+      <input type="range" id="r-${key}" data-ou="${key}" min="${o.min}" max="${o.max}" step="${o.step}" value="${line}" ${dis ? "disabled" : ""} aria-label="${o.label} line">
+      <div class="ou-ticks"><span>${fmt(o.min)}</span><span>${fmt(o.max)}</span></div>
+      <div class="ou-sides" style="margin-top:10px">
+        <button type="button" class="opt" data-act="side" data-val="${key}|under" aria-pressed="${side === "under"}" ${dis ? "disabled" : ""}><span class="who">${o.underText}<span class="sub" id="ou-u-${key}">${fmt(line)}</span></span><span class="pill" id="ou-up-${key}">${ouPoints(key, line, "under")}<small>pts</small></span></button>
+        <button type="button" class="opt" data-act="side" data-val="${key}|over" aria-pressed="${side === "over"}" ${dis ? "disabled" : ""}><span class="who">${o.overText}<span class="sub" id="ou-o-${key}">${fmt(line)}</span></span><span class="pill" id="ou-op-${key}">${ouPoints(key, line, "over")}<small>pts</small></span></button>
+      </div></section>`;
+  }
+  function renderPicks() {
+    const d = S.draft;
+    const R = RUNNERS.map(r => ({ id: r.id, title: r.name, sub: r.team + " · " + r.yr + (r.us ? " · USA" : ""), r }));
+    let h = "";
+    if (S.conn === "nodb") h += `<div class="note">Couldn't connect to the pick sheet. Check your connection and reload the page.</div>`;
+    else if (S.conn === "connecting") h += `<div class="note">Connecting to the pick sheet…</div>`;
+    else if (S.conn === "slow") h += `<div class="note">The pick sheet isn't answering yet. Your picks are kept on this device until it does.</div>`;
+    if (S.readOnly) h += `<div class="note">You can view this page but can't save picks.</div>`;
+    if (locked()) h += `<div class="note">Picks locked at 11:10 a.m. ET. Check the leaderboard.</div>`;
+    if (S.saveMsg) h += `<div class="note ${S.saveMsg.startsWith("Saved") ? "ok" : ""}">${esc(S.saveMsg)}</div>`;
+    h += `<div class="field-row"><label class="lbl" for="nick">Your name on the leaderboard</label><input type="text" id="nick" maxlength="24" placeholder="e.g. Joe" value="${esc(d.nick)}" ${locked() ? "disabled" : ""}></div>`;
+    h += listCard("01", "champ", "Individual champ", "Who breaks the tape first.", R.map(i => ({ ...i, pts: PTS.champ(i.id) })).concat([{ id: "field", title: "Field", sub: "Anyone not on this list", pts: PTS.champ("field") }]), { limit: 12 });
+    h += listCard("02", "podium", "Podium, any order", `Pick 3 runners. Each one who finishes top 3 pays. <b>${(d.podium || []).length}/3 picked.</b>`, R.map(i => ({ ...i, pts: PTS.podium(i.id) })), { multi: true, limit: 12 });
+    h += listCard("03", "topAm", "Top American", "First US runner across the line.", AMERICANS.map(a => ({ id: a.id, title: a.name, sub: a.team, pts: PTS.topAm(a.id) })).concat([{ id: "field", title: "Field", sub: "Any other American", pts: PTS.topAm("field") }]), { limit: 8 });
+    h += listCard("04", "topFr", "Top freshman", "First freshman across the line.", FRESHMEN.map(a => ({ id: a.id, title: a.name, sub: a.team, pts: PTS.topFr(a.id) })).concat([{ id: "field", title: "Field", sub: "Any other freshman", pts: PTS.topFr("field") }]), { limit: 8 });
+    h += listCard("05", "lead5k", "Leader at 5K", "First name on the official 5K split. Packs often go out together, so the field pays little.", R.map(i => ({ ...i, pts: PTS.lead5k(i.id) })).concat([{ id: "field", title: "Field", sub: "Anyone not on this list", pts: PTS.lead5k("field") }]), { limit: 10 });
+    h += listCard("06", "teamChamp", "Team champ", "Lowest five-runner score wins.", CHAMP_TEAMS.map(t => ({ id: t.id, title: t.name, sub: "No. " + t.rank + " in the coaches' poll", pts: PTS.teamChamp(t.id) })).concat([{ id: "field", title: "Field", sub: "Any other team", pts: PTS.teamChamp("field") }]), { limit: 12 });
+    h += listCard("07", "teamSecond", "Team runner-up", "Second place in the team standings.", CHAMP_TEAMS.map(t => ({ id: t.id, title: t.name, sub: "No. " + t.rank + " in the coaches' poll", pts: PTS.teamSecond(t.id) })).concat([{ id: "field", title: "Field", sub: "Any other team", pts: PTS.teamSecond("field") }]), { limit: 12 });
+    h += listCard("08", "trophy", "Trophy teams, any order", `Top 4 teams take home trophies. Pick 4; each one that makes it pays. <b>${(d.trophy || []).length}/4 picked.</b>`, TROPHY_TEAMS.map(t => ({ id: t.id, title: t.name, sub: "No. " + t.rank, pts: PTS.trophy(t.id) })), { multi: true, limit: 15 });
+    h += listCard("09", "darkHorse", "Dark horse", "Pick one team ranked 11th or lower. Pays if it finishes top 10.", DARK_HORSES.map(t => ({ id: t.id, title: t.name, sub: t.rank <= 30 ? "No. " + t.rank : "Unranked", pts: PTS.darkHorse(t.id) })), { limit: 10 });
+    h += ouCard("10", "time");
+    h += ouCard("11", "score");
+    h += ouCard("12", "us");
+    $("#main").innerHTML = h;
+    updateSaveBar();
+  }
+  function updateSaveBar() {
+    const bar = $("#savebar");
+    if (S.tab !== "picks") { bar.hidden = true; return; }
+    bar.hidden = false;
+    const d = S.draft;
+    $("#savesum").innerHTML = `<b>${filledCount(d)}/12</b> picked · <b>${maxHaul(d)}</b> pts if all hit` + (S.dirty ? " · <b>not saved</b>" : S.entries.has(S.uid) ? " · saved" : "");
+    const btn = $("#savebtn");
+    btn.disabled = locked() || S.saving || !S.db || !S.uid || S.readOnly;
+    btn.textContent = locked() ? "Locked" : S.saving ? "Saving…" : "Save picks";
+  }
+  function setDirty() { S.dirty = true; S.saveMsg = ""; keepDraft(); }
+
+  async function save() {
+    if (locked() || !S.db || !S.uid) return;
+    const d = S.draft;
+    if (!d.nick.trim()) { S.saveMsg = "Add your name first so everyone knows whose picks these are."; renderPicks(); $("#nick").focus(); return; }
+    S.saving = true; updateSaveBar();
+    const body = JSON.parse(JSON.stringify(d));
+    body.nick = d.nick.trim().slice(0, 24); body.uid = S.uid; body.savedAt = new Date().toISOString();
+    try {
+      await S.db.doc("picks/" + S.uid).set(body);
+      S.dirty = false; S.saveMsg = "Saved. You can change picks until 11:10 a.m. ET Saturday.";
+      try { localStorage.removeItem("thpe-draft"); } catch (e) {}
+    } catch (e) {
+      if (e && e.code === "permission_denied") { S.saveMsg = locked() ? "Couldn't save: picks are locked." : "Couldn't save: the pick sheet refused the change. Text Joe."; }
+      else if (e && e.code === "unavailable") S.saveMsg = "Couldn't reach the pick sheet. Try Save again in a moment.";
+      else S.saveMsg = "Couldn't save (" + ((e && e.code) || "error") + "). Try again.";
+    }
+    S.saving = false;
+    if (S.tab === "picks") renderPicks();
+  }
+
+  // ---------- leaderboard ----------
+  function displayName(e) { return e.nick || (S.names[e.uid] || "") || "Someone"; }
+  function renderBoard() {
+    const res = S.results || {};
+    const rows = [...S.entries.values()].map(e => { const sc = scoreEntry(e, res); return { e, sc, tot: totalOf(sc) }; });
+    rows.sort((a, b) => b.tot - a.tot || displayName(a.e).localeCompare(displayName(b.e)));
+    const anyRes = S.results && Object.values(S.results).some(v => v != null && v !== "" && !(Array.isArray(v) && !v.length));
+    let h = "";
+    if (!locked()) h += `<div class="note">Everyone's picks stay hidden until the 11:10 lock. You can see who's in.</div>`;
+    else if (!anyRes) h += `<div class="note">Picks are locked. Points appear as results come in.</div>`;
+    else h += `<div class="note ok">Results ${S.results.final ? "are final" : "are coming in"}. Tap a name to see their card.</div>`;
+    if (!rows.length) h += `<p class="how">No entries yet. Make your picks on the first tab.</p>`;
+    let rank = 0, prev = null;
+    h += `<div class="lb">` + rows.map((r, i) => {
+      if (r.tot !== prev) { rank = i + 1; prev = r.tot; }
+      const mine = r.e.uid === S.uid;
+      const late = r.e.savedAt && Date.parse(r.e.savedAt) > LOCK_AT;
+      const showDetail = locked() || mine;
+      const open = S.open[r.e.uid];
+      const hits = r.sc.filter(x => x.status === "hit").length;
+      let det = "";
+      if (open && showDetail) {
+        det = `<div class="lb-detail"><div class="brk">` + r.sc.map(x => {
+          const mark = x.status === "hit" ? "✓" : x.status === "miss" ? "✗" : x.status === "push" ? "=" : "·";
+          return `<div><span class="st ${x.status}">${mark}</span><span class="k">${x.label}:</span> ${esc(pickText(x.key, r.e))}</div><div class="v">${x.pts ? "+" + x.pts : ""}</div>`;
+        }).join("") + `</div></div>`;
+      } else if (open) det = `<div class="lb-detail how">Picks hidden until 11:10 a.m. ET.</div>`;
+      return `<div class="lb-row ${rank === 1 && anyRes ? "first" : ""}"><button type="button" class="lb-top" data-act="open" data-val="${esc(r.e.uid)}" aria-expanded="${!!open}">
+        <span class="rk num">${anyRes ? rank : "–"}</span>
+        <span class="nm">${esc(displayName(r.e))}${mine ? '<span class="tag">you</span>' : ""}${late ? '<span class="tag">saved late</span>' : ""}<small>${filledCount(r.e)}/12 picked${anyRes ? " · " + hits + " hits" : ""}</small></span>
+        <span class="tot num">${r.tot}</span></button>${det}</div>`;
+    }).join("") + `</div>`;
+    h += `<p class="how" style="margin-top:12px">Pot: $${rows.length * BUY_IN}, winner takes all. A tie for first splits the pot.</p>`;
+    $("#main").innerHTML = h;
+  }
+
+  // ---------- odds ----------
+  const pct = p => (p * 100 < 1 ? (p * 100).toFixed(1) : Math.round(p * 100)) + "%";
+  function renderOdds() {
+    let h = `<p class="how">These are my estimates, built from Nuttycombe, Pre-Nats, conference meets, regionals, last year's NCAA results and the Nov 16 coaches' poll. Saturday looks dry and mild (high near 68°F), so expect firm, fast ground. Points = weight × √((1−p)/p), so a pick I give a 1-in-4 shot pays about 1.7× the weight and a 1-in-100 shot about 10×.</p>`;
+    h += `<h2 class="sec-h">Individual</h2><div class="tbl-wrap"><table><thead><tr><th>Runner</th><th class="r">Win</th><th class="r">Champ</th><th class="r">Top 3</th><th class="r">Podium</th><th class="r">5K</th></tr></thead><tbody>`;
+    h += RUNNERS.map(r => `<tr><td><b>${esc(r.name)}</b><span class="sub">${esc(r.team)} · ${r.yr}${r.us ? " · USA" : ""}${r.note ? " — " + esc(r.note) : ""}</span></td><td class="r">${pct(r.win)}</td><td class="r"><b>${PTS.champ(r.id)}</b></td><td class="r">${pct(r.top3)}</td><td class="r"><b>${PTS.podium(r.id)}</b></td><td class="r"><b>${PTS.lead5k(r.id)}</b></td></tr>`).join("");
+    h += `<tr><td><b>Field</b><span class="sub">Everyone else</span></td><td class="r">${pct(FIELD_WIN)}</td><td class="r"><b>${PTS.champ("field")}</b></td><td class="r">—</td><td class="r">—</td><td class="r"><b>${PTS.lead5k("field")}</b></td></tr></tbody></table></div>`;
+    h += `<h2 class="sec-h">Teams</h2><div class="tbl-wrap"><table><thead><tr><th>Team</th><th class="r">Win</th><th class="r">Champ</th><th class="r">2nd</th><th class="r">Top 4</th><th class="r">Trophy</th><th class="r">Top 10</th><th class="r">Dark horse</th></tr></thead><tbody>`;
+    h += TEAMS.map(t => `<tr><td><b>${esc(t.name)}</b><span class="sub">${t.rank <= 30 ? "No. " + t.rank : "Unranked"}</span></td><td class="r">${t.rank <= 11 ? pct(t.win) : "—"}</td><td class="r"><b>${t.rank <= 11 ? PTS.teamChamp(t.id) : "—"}</b></td><td class="r"><b>${t.rank <= 11 ? PTS.teamSecond(t.id) : "—"}</b></td><td class="r">${t.top4 ? pct(t.top4) : "—"}</td><td class="r"><b>${t.top4 ? PTS.trophy(t.id) : "—"}</b></td><td class="r">${pct(t.top10)}</td><td class="r"><b>${t.rank >= 11 ? PTS.darkHorse(t.id) : "—"}</b></td></tr>`).join("");
+    h += `</tbody></table></div>`;
+    const sideTbl = (title, list, fieldP, fn) => `<h2 class="sec-h">${title}</h2><div class="tbl-wrap"><table><thead><tr><th>Runner</th><th class="r">Chance</th><th class="r">Pts</th></tr></thead><tbody>` +
+      list.map(a => `<tr><td><b>${esc(a.name)}</b><span class="sub">${esc(a.team)}</span></td><td class="r">${pct(a.p)}</td><td class="r"><b>${fn(a.id)}</b></td></tr>`).join("") +
+      `<tr><td><b>Field</b></td><td class="r">${pct(fieldP)}</td><td class="r"><b>${fn("field")}</b></td></tr></tbody></table></div>`;
+    h += sideTbl("Top American", AMERICANS, FIELD_AM, PTS.topAm);
+    h += sideTbl("Top freshman", FRESHMEN, FIELD_FR, PTS.topFr);
+    const ladder = (key, lines) => `<h2 class="sec-h">${OU[key].label}</h2><div class="tbl-wrap"><table><thead><tr><th>Line</th><th class="r">${OU[key].underText}</th><th class="r">${OU[key].overText}</th></tr></thead><tbody>` +
+      lines.map(x => `<tr><td class="num">${key === "time" ? fmtTime(x) : x}</td><td class="r"><b>${ouPoints(key, x, "under")}</b></td><td class="r"><b>${ouPoints(key, x, "over")}</b></td></tr>`).join("") + `</tbody></table></div>`;
+    h += ladder("time", [1710, 1725, 1740, 1755, 1770]) + `<p class="how">My median: 29:00. The course record is 28:41.3 (Sam Chelanga, 2009). Past NCAA winners here ran 28:41 to 30:33, usually 29:20 or slower, but this field is fast and Saturday looks dry.</p>`;
+    h += ladder("score", [50, 65, 85, 100, 115, 130]) + `<p class="how">My median: 85. The last five winners scored 92, 83, 49, 124 and 57 (2021–2025). New Mexico scored 35 at its regional and 59 at Nuttycombe.</p>`;
+    h += ladder("us", [6.5, 8.5, 9.5, 11.5, 13.5]) + `<p class="how">My median: 10. Last year 11 Americans finished in the top 40, but only 5 in the top 30.</p>`;
+    $("#main").innerHTML = h;
+  }
+
+  function renderRules() {
+    $("#main").innerHTML = `<div class="prose">
+      <h2>How it works</h2>
+      <ul><li>Everyone puts in $${BUY_IN}. Most points when results are final takes the pot. A tie for first splits it.</li>
+      <li>Make all 12 picks on the first tab and tap <b>Save picks</b>. You can change them as often as you like until the men's gun at <b>11:10 a.m. ET Saturday</b>.</li>
+      <li>Picks stay hidden from everyone else until the lock, then the whole board opens up.</li></ul>
+      <h2>Scoring</h2>
+      <p>Each pick has a price set from my estimate of its chance (p). If it hits you get weight × √((1−p)/p), at least 1 point. Long shots pay more per hit but hit less often. Picks that miss score 0, and so does a runner who doesn't start.</p>
+      <p>Weights: individual champ 10 · podium 5 per runner · top American 8 · top freshman 8 · 5K leader 6 · team champ 10 · team runner-up 8 · trophy teams 4 per team · dark horse 8 · winning time 10 · team score 10 · US-born count 8.</p>
+      <h2>Fine print</h2>
+      <ul><li><b>Field</b> picks hit if the answer is anyone not on that list.</li>
+      <li><b>5K leader</b> is the first runner listed at the official 5K split in the live results.</li>
+      <li><b>Top freshman</b> uses class year as listed in the official results.</li>
+      <li><b>American-born</b> means born in the US. If someone's birthplace is unclear, Joe makes the call before scoring.</li>
+      <li><b>Over/under</b> lines are whatever you set. Landing exactly on the line is a push (0 points).</li>
+      <li>Results come from the official NCAA results. Joe enters them, and he can fix mistakes after.</li>
+      <li>Your picks are tied to this phone and browser. Make and edit them in the same browser you started in.</li></ul></div>`;
+  }
+
+  // ---------- results (owner) ----------
+  function sel(id, list, val, withField, blank) {
+    return `<select id="${id}"><option value="">${blank || "— not yet —"}</option>` + list.map(x => `<option value="${x.id}" ${val === x.id ? "selected" : ""}>${esc(x.name)}</option>`).join("") +
+      (withField ? `<option value="field" ${val === "field" ? "selected" : ""}>Someone not listed (field)</option>` : "") + `</select>`;
+  }
+  function renderResults() {
+    if (!S.isOwner) { $("#main").innerHTML = `<p class="how">Only Joe can enter results.</p><p class="how">Device ID: <code id="myid">${esc(S.uid || "connecting…")}</code></p>`; return; }
+    const r = S.results || {};
+    const pod = r.podium || [], tro = r.trophy || [], t10 = r.top10 || [];
+    let h = `<div class="note">Only you see this tab. Leave anything blank that isn't known yet. Scores update for everyone when you save.</div>`;
+    h += `<div class="card"><h2 class="sec-h" style="margin-top:0">Individual</h2>
+      <div class="field-row"><label class="lbl" for="x-champ">Champion</label>${sel("x-champ", RUNNERS, r.champ, true)}</div>
+      <div class="field-row"><label class="lbl">Top 3 (any order)</label>${[0, 1, 2].map(i => sel("x-pod" + i, RUNNERS, pod[i], true)).join("")}</div>
+      <div class="field-row"><label class="lbl" for="x-topAm">Top American</label>${sel("x-topAm", AMERICANS, r.topAm, true)}</div>
+      <div class="field-row"><label class="lbl" for="x-topFr">Top freshman</label>${sel("x-topFr", FRESHMEN, r.topFr, true)}</div>
+      <div class="field-row"><label class="lbl" for="x-lead5k">Leader at 5K</label>${sel("x-lead5k", RUNNERS, r.lead5k, true)}</div>
+      <div class="grid2"><div class="field-row"><label class="lbl" for="x-time">Winning time (mm:ss.t)</label><input type="text" id="x-time" inputmode="decimal" placeholder="28:41.3" value="${r.time != null ? fmtTime(r.time) : ""}"></div>
+      <div class="field-row"><label class="lbl" for="x-us">US-born in top 40</label><input type="number" id="x-us" min="0" max="40" value="${r.us != null ? r.us : ""}"></div></div></div>`;
+    h += `<div class="card"><h2 class="sec-h" style="margin-top:0">Teams</h2>
+      <div class="field-row"><label class="lbl" for="x-teamChamp">Team champion</label>${sel("x-teamChamp", CHAMP_TEAMS, r.teamChamp, true)}</div>
+      <div class="field-row"><label class="lbl" for="x-teamSecond">Runner-up</label>${sel("x-teamSecond", CHAMP_TEAMS, r.teamSecond, true)}</div>
+      <div class="field-row"><label class="lbl" for="x-score">Winning team score</label><input type="number" id="x-score" min="15" max="400" value="${r.score != null ? r.score : ""}"></div>
+      <div class="field-row"><label class="lbl">Top 4 (trophies)</label>${[0, 1, 2, 3].map(i => sel("x-tro" + i, TEAMS, tro[i], false)).join("")}</div>
+      <div class="field-row"><label class="lbl">Top 10 teams (for dark horse)</label><div class="checks">${TEAMS.map(t => `<label><input type="checkbox" class="x-t10" value="${t.id}" ${t10.includes(t.id) ? "checked" : ""}>${esc(t.name)}</label>`).join("")}</div></div>
+      <label style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="x-final" ${r.final ? "checked" : ""}> Results are final</label></div>
+      <button type="button" class="btn" data-act="saveResults">Save results</button> <span class="how" id="x-msg"></span>`;
+    $("#main").innerHTML = h;
+  }
+  async function saveResults() {
+    const v = id => { const el = document.getElementById(id); return el && el.value ? el.value : null; };
+    const time = parseTime(v("x-time"));
+    if (v("x-time") && time == null) { $("#x-msg").textContent = "Winning time needs to look like 28:41.3"; return; }
+    const body = {
+      champ: v("x-champ"), podium: [0, 1, 2].map(i => v("x-pod" + i)).filter(Boolean), topAm: v("x-topAm"), topFr: v("x-topFr"), lead5k: v("x-lead5k"),
+      teamChamp: v("x-teamChamp"), teamSecond: v("x-teamSecond"), trophy: [0, 1, 2, 3].map(i => v("x-tro" + i)).filter(Boolean),
+      top10: [...document.querySelectorAll(".x-t10:checked")].map(c => c.value), time, score: v("x-score") != null ? +v("x-score") : null,
+      us: v("x-us") != null ? +v("x-us") : null, final: document.getElementById("x-final").checked, updatedAt: new Date().toISOString(),
+    };
+    $("#x-msg").textContent = "Saving…";
+    try { await S.db.doc("results/official").set(body); $("#x-msg").textContent = "Saved. The leaderboard is updated."; }
+    catch (e) { $("#x-msg").textContent = "Couldn't save (" + ((e && e.code) || "error") + ")."; }
+  }
+
+  // ---------- routing + events ----------
+  function render() {
+    renderHeader(); renderTabs();
+    if (S.tab === "board") renderBoard(); else if (S.tab === "odds") renderOdds(); else if (S.tab === "rules") renderRules();
+    else if (S.tab === "results") renderResults(); else renderPicks();
+    updateSaveBar();
+  }
+  function route() {
+    const h = (location.hash || "").slice(1);
+    S.tab = ["picks", "board", "odds", "rules", "results"].includes(h) ? h : "picks";
+    render(); window.scrollTo(0, 0);
+  }
+  window.addEventListener("hashchange", route);
+  document.addEventListener("click", ev => {
+    const b = ev.target.closest("[data-act]"); if (!b) return;
+    const act = b.dataset.act, val = b.dataset.val;
+    const d = S.draft;
+    if (act === "pick") { if (locked()) return; const [k, id] = val.split("|"); d[k] = d[k] === id ? null : id; setDirty(); renderKeep(); }
+    else if (act === "toggle") {
+      if (locked()) return; const [k, id] = val.split("|"); const max = k === "podium" ? 3 : 4; const arr = d[k] = (d[k] || []).slice();
+      const i = arr.indexOf(id); if (i >= 0) arr.splice(i, 1); else { if (arr.length >= max) arr.shift(); arr.push(id); }
+      setDirty(); renderKeep();
+    }
+    else if (act === "side") { if (locked()) return; const [k, side] = val.split("|"); d[k + "Side"] = d[k + "Side"] === side ? null : side; setDirty(); renderKeep(); }
+    else if (act === "expand") { S.expanded[val] = !S.expanded[val]; renderKeep(); }
+    else if (act === "open") { S.open[val] = !S.open[val]; renderBoard(); }
+    else if (act === "saveResults") saveResults();
+  });
+  function renderKeep() { const y = window.scrollY; renderPicks(); window.scrollTo(0, y); }
+  document.addEventListener("input", ev => {
+    const t = ev.target;
+    if (t.id === "nick") { S.draft.nick = t.value; setDirty(); updateSaveBar(); return; }
+    if (t.dataset && t.dataset.ou) {
+      const k = t.dataset.ou, x = +t.value; S.draft[k + "Line"] = x; setDirty();
+      const f = OU[k].unit === "time" ? fmtTime(x) : x;
+      $("#ol-" + k).textContent = f; $("#ou-u-" + k).textContent = f; $("#ou-o-" + k).textContent = f;
+      $("#ou-up-" + k).innerHTML = ouPoints(k, x, "under") + "<small>pts</small>"; $("#ou-op-" + k).innerHTML = ouPoints(k, x, "over") + "<small>pts</small>";
+      updateSaveBar();
+    }
+  });
+  $("#savebtn").addEventListener("click", save);
+  setInterval(() => { const wasLocked = S._wasLocked; renderHeader(); if (locked() !== wasLocked) { S._wasLocked = locked(); render(); } }, 15000);
+  S._wasLocked = locked();
+
+  // ---------- data ----------
+  async function connect() {
+    let fb;
+    try {
+      const [appM, authM, fsM] = await Promise.all([
+        import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"),
+        import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"),
+        import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"),
+      ]);
+      fb = { appM, authM, fsM };
+    } catch (e) { S.conn = "nodb"; render(); return; }
+    if (!FIREBASE_CONFIG || !FIREBASE_CONFIG.apiKey) { S.conn = "nodb"; render(); return; }
+    const app = fb.appM.initializeApp(FIREBASE_CONFIG);
+    const auth = fb.authM.getAuth(app);
+    const fs = fb.fsM.getFirestore(app);
+    const F = fb.fsM;
+    // small adapter so the rest of the page keeps the same calls
+    const wrapDoc = d => ({ id: d.id, exists: d.exists(), data: () => d.data(), metadata: d.metadata });
+    S.db = {
+      doc: path => {
+        const ref = F.doc(fs, path);
+        return {
+          set: body => F.setDoc(ref, body).catch(e => { throw { code: e.code === "permission-denied" ? "permission_denied" : (e.code || "error") }; }),
+          onSnapshot: (next, err) => F.onSnapshot(ref, d => next(wrapDoc(d)), err),
+        };
+      },
+      collection: path => ({
+        onSnapshot: (next, err) => F.onSnapshot(F.collection(fs, path), q => next({ docs: q.docs.map(wrapDoc), metadata: q.metadata }), err),
+      }),
+    };
+    try {
+      const cred = await fb.authM.signInAnonymously(auth);
+      S.uid = cred.user.uid;
+    } catch (e) { S.conn = "nodb"; render(); return; }
+    S.isOwner = S.uid === ADMIN_UID;
+    let first = true;
+    const timer = setTimeout(() => { if (first) { S.conn = "slow"; if (S.tab === "picks") renderPicks(); } }, 10000);
+    S.db.collection("picks").onSnapshot(snap => {
+      if (!snap.metadata.fromCache) clearTimeout(timer);
+      const m = new Map();
+      snap.docs.forEach(doc => { const v = doc.data(); if (v) m.set(doc.id, Object.assign({ uid: doc.id }, v)); });
+      S.entries = m;
+      const mine = m.get(S.uid);
+      let rerender = first;
+      if (mine && !S.loadedMine) { if (!S.dirty) S.draft = Object.assign(defaultDraft(), mine); S.loadedMine = true; rerender = true; }
+      if (first) { first = false; S.conn = "ok"; }
+      if (S.tab === "picks") { if (rerender && document.activeElement?.id !== "nick") { const y = window.scrollY; renderPicks(); window.scrollTo(0, y); } else updateSaveBar(); }
+      else if (S.tab === "board") renderBoard();
+      renderHeader();
+    }, () => { clearTimeout(timer); S.conn = "slow"; render(); });
+    S.db.doc("results/official").onSnapshot(s => { S.results = s.exists ? s.data() : null; if (S.tab === "board") renderBoard(); }, () => {});
+    render();
+  }
+  route();
+  connect();
+})();
+</script>
+</body>
+</html>

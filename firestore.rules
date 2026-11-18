@@ -1,0 +1,17 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Everyone can read picks; each phone can only write its own, and only before the 11:10 a.m. ET gun (16:10 UTC)
+    match /picks/{uid} {
+      allow read: if true;
+      allow create, update: if request.auth != null
+        && request.auth.uid == uid
+        && request.time < timestamp.date(2026, 11, 21) + duration.value(970, 'm');
+    }
+    // Everyone can read results; only Joe's device can write them
+    match /results/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == "ADMIN_UID_HERE";
+    }
+  }
+}
