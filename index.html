@@ -719,9 +719,23 @@ const ADMIN_UID = "MyOR6llc8QfULylvCCiAtQ2o1uG3";
       else if (S.tab === "board") renderBoard();
       renderHeader();
     }, () => { clearTimeout(timer); S.conn = "slow"; render(); });
-    S.db.doc("results/official").onSnapshot(s => { S.results = s.exists ? s.data() : null; if (S.tab === "board") renderBoard(); }, () => {});
+    S.db.doc("results/official").onSnapshot(s => { S.fbResults = s.exists ? s.data() : null; applyResults(); }, () => {});
     render();
   }
+  // Results can also be published as results.json in the repo (no admin device needed). It wins over Firestore.
+  function applyResults() {
+    const prev = JSON.stringify(S.results);
+    S.results = S.fileResults || S.fbResults || null;
+    if (JSON.stringify(S.results) !== prev && S.tab === "board") renderBoard();
+  }
+  async function pollResultsFile() {
+    try {
+      const r = await fetch("results.json?t=" + Date.now(), { cache: "no-store" });
+      if (r.ok) { const j = await r.json(); S.fileResults = (j && typeof j === "object" && Object.keys(j).length) ? j : null; applyResults(); }
+    } catch (e) {}
+  }
+  pollResultsFile();
+  setInterval(pollResultsFile, 30000);
   route();
   connect();
 })();
