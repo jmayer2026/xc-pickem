@@ -329,7 +329,7 @@ function gradeGame(g, o, r) { // returns [{key,label,text,pts,status:"hit"|"miss
     const d = S.draft;
     let h = "";
     if (S.conn === "nodb") h += `<div class="note">Couldn't connect to the pick sheet. Check your connection and reload. Your picks are kept on this phone in the meantime.</div>`;
-    else if (S.conn === "connecting") h += `<div class="note">Connecting…</div>`;
+    else if (S.conn === "connecting") h += `<div class="note">Connecting… This can take several seconds. Go ahead and start picking; your picks save automatically once it connects.</div>`;
     else if (S.conn === "slow") h += `<div class="note">The pick sheet is slow to answer. Your picks are kept on this phone until it does.</div>`;
     if (S.saveErr) h += `<div class="note">${esc(S.saveErr)}</div>`;
     h += `<div class="field-row"><label class="lbl" for="nick">Your name on the leaderboard</label><input type="text" id="nick" maxlength="24" autocomplete="off" placeholder="e.g. Joe" value="${esc(d.name)}"></div>`;
