@@ -1,17 +1,44 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Everyone can read picks; each phone can only write its own, and only before the 11:10 a.m. ET gun (16:10 UTC)
+    // ---- Terre Haute XC pick'em (Nov 21) ----
     match /picks/{uid} {
       allow read: if true;
       allow create, update: if request.auth != null
         && request.auth.uid == uid
         && request.time < timestamp.date(2026, 11, 21) + duration.value(970, 'm');
     }
-    // Everyone can read results; only Joe's device can write them
     match /results/{doc} {
       allow read: if true;
       allow write: if request.auth != null && request.auth.uid == "MyOR6llc8QfULylvCCiAtQ2o1uG3";
+    }
+
+    // ---- Thanksgiving pick'em (Nov 26-27) ----
+    // One doc per phone. Fields g1..g9 hold that game's picks and lock at kickoff.
+    function tgLocked() {
+      return [
+        request.time >= timestamp.value(1795716000000) ? 'g1' : '-',
+        request.time >= timestamp.value(1795728600000) ? 'g2' : '-',
+        request.time >= timestamp.value(1795741200000) ? 'g3' : '-',
+        request.time >= timestamp.value(1795742400000) ? 'g4' : '-',
+        request.time >= timestamp.value(1795798800000) ? 'g5' : '-',
+        request.time >= timestamp.value(1795798800000) ? 'g6' : '-',
+        request.time >= timestamp.value(1795809600000) ? 'g7' : '-',
+        request.time >= timestamp.value(1795811400000) ? 'g8' : '-',
+        request.time >= timestamp.value(1795825800000) ? 'g9' : '-'
+      ];
+    }
+    function tgShape() {
+      return request.resource.data.keys().hasOnly(['name', 'uid', 'upd', 'g1', 'g2', 'g3', 'g4', 'g5', 'g6', 'g7', 'g8', 'g9'])
+        && request.resource.data.name is string && request.resource.data.name.size() <= 24;
+    }
+    match /tg/{uid} {
+      allow read: if true;
+      allow create: if request.auth != null && request.auth.uid == uid && tgShape()
+        && !request.resource.data.keys().hasAny(tgLocked());
+      allow update: if request.auth != null && request.auth.uid == uid && tgShape()
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(tgLocked());
+      allow delete: if false;
     }
   }
 }

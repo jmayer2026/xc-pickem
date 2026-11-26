@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thanksgiving Pick'em</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4efe6; --surface: #fffdf9; --ink: #2a1d14; --muted: #6e5d50; --line: #e0d4c4;
+  --accent: #c8501b; --accent-ink: #fff; --accent-soft: #fbe6d8; --field: #2f6b3c; --field-soft: #e1eedf; --miss: #a99a8e;
+  --display: "Barlow Condensed", "Arial Narrow", Arial, sans-serif;
+  --body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #17120e; --surface: #221a14; --ink: #f1e8df; --muted: #b5a393; --line: #3a2e25;
+    --accent: #f07a3c; --accent-ink: #1d0e05; --accent-soft: #3d2416; --field: #7cc48a; --field-soft: #1d3322; --miss: #6f6257; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.45; -webkit-text-size-adjust: 100%; }
+.wrap { max-width: 720px; margin: 0 auto; padding: 0 14px 130px; }
+h1, h2, h3 { font-family: var(--display); margin: 0; letter-spacing: .01em; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+header.top { margin: 14px 0 10px; text-align: center; }
+header.top .eyebrow { font-family: var(--display); font-weight: 700; text-transform: uppercase; color: var(--accent); letter-spacing: .1em; font-size: 14px; }
+header.top h1 { font-size: clamp(38px, 11vw, 60px); line-height: .95; font-weight: 800; text-transform: uppercase; }
+header.top .meta { color: var(--muted); font-size: 14px; margin-top: 4px; }
+nav.tabs { display: flex; gap: 6px; padding: 6px 0 12px; position: sticky; top: 0; background: var(--bg); z-index: 5; }
+nav.tabs a { flex: 1; white-space: nowrap; text-align: center; text-decoration: none; color: var(--ink); font-family: var(--display); font-weight: 700; font-size: 16px; text-transform: uppercase; letter-spacing: .03em; padding: 7px 4px; border-radius: 999px; border: 2px solid var(--line); background: var(--surface); }
+nav.tabs a[aria-current="page"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.note { background: var(--accent-soft); border-radius: 8px; padding: 10px 12px; font-size: 14px; margin-bottom: 12px; }
+.note.ok { background: var(--field-soft); }
+.field-row { display: grid; gap: 6px; margin-bottom: 14px; }
+label.lbl { font-weight: 700; font-size: 14px; }
+input[type="text"], input[type="number"] { font: inherit; font-size: 17px; padding: 10px 12px; border-radius: 8px; border: 2px solid var(--line); background: var(--surface); color: var(--ink); width: 100%; }
+.game { scroll-margin-top: 64px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 12px 6px; margin-bottom: 14px; }
+.game.locked { opacity: .92; }
+.gh { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.gh h2 { font-size: 26px; font-weight: 800; text-transform: uppercase; line-height: 1.05; }
+.gh .lg { font-family: var(--display); font-weight: 700; color: var(--accent); font-size: 14px; letter-spacing: .06em; white-space: nowrap; }
+.gsub { color: var(--muted); font-size: 13px; margin: 2px 0 8px; }
+.gsub b { color: var(--ink); }
+.score { font-family: var(--display); font-weight: 800; font-size: 20px; }
+.row { border-top: 1px dashed var(--line); padding: 9px 0 8px; }
+.row .rl { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 6px; display: flex; justify-content: space-between; gap: 8px; }
+.row .rl .res { text-transform: none; letter-spacing: 0; font-weight: 700; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.opt { display: flex; justify-content: space-between; align-items: center; gap: 6px; text-align: left; width: 100%; min-height: 48px; padding: 8px 10px; border-radius: 8px; border: 2px solid var(--line); background: var(--surface); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.opt[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.opt[disabled] { cursor: default; }
+.opt .t { font-weight: 600; line-height: 1.15; }
+.opt .t small { display: block; font-weight: 400; font-size: 12px; color: var(--muted); }
+.pill { font-family: var(--display); font-weight: 800; font-size: 20px; line-height: 1; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pill small { font-size: 11px; font-weight: 700; color: var(--muted); margin-left: 1px; }
+.opt.hit { border-color: var(--field); background: var(--field-soft); }
+.opt.miss { border-color: var(--miss); }
+.opt.miss .t, .opt.miss .pill { text-decoration: line-through; color: var(--miss); }
+.slider { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 8px; margin-bottom: 8px; }
+.slider output { grid-column: 1 / -1; text-align: center; font-family: var(--display); font-weight: 800; font-size: 26px; line-height: 1; }
+.step { height: 40px; border-radius: 8px; border: 2px solid var(--line); background: var(--surface); font-weight: 800; font-size: 20px; cursor: pointer; }
+input[type="range"] { width: 100%; accent-color: var(--accent); height: 28px; }
+.reset { background: none; border: 0; color: var(--field); font-weight: 700; font-size: 13px; cursor: pointer; padding: 0; }
+.savebar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 2px solid var(--ink); z-index: 10; padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); }
+.savebar .in { max-width: 720px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
+.savebar .sum { flex: 1; font-size: 14px; color: var(--muted); line-height: 1.3; }
+.savebar .sum b { color: var(--ink); }
+.savebar .sum .st-ok { color: var(--field); font-weight: 700; }
+.savebar .sum .st-bad { color: var(--accent); font-weight: 700; }
+.btn { font-family: var(--display); font-weight: 800; font-size: 19px; text-transform: uppercase; letter-spacing: .04em; border: 0; border-radius: 8px; padding: 10px 16px; background: var(--accent); color: var(--accent-ink); cursor: pointer; white-space: nowrap; }
+.btn[disabled] { opacity: .5; cursor: default; }
+.lb { display: grid; gap: 8px; }
+.lb-row { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.lb-top { display: grid; grid-template-columns: 36px 1fr auto; gap: 10px; align-items: center; padding: 11px 12px; width: 100%; text-align: left; background: none; border: 0; cursor: pointer; }
+.lb-top .rk { font-family: var(--display); font-weight: 800; font-size: 26px; color: var(--muted); }
+.lb-row.first .rk { color: var(--accent); }
+.lb-top .nm { font-weight: 700; font-size: 18px; }
+.lb-top .nm small { display: block; font-weight: 400; font-size: 13px; color: var(--muted); }
+.lb-top .tot { font-family: var(--display); font-weight: 800; font-size: 30px; font-variant-numeric: tabular-nums; }
+.lb-detail { border-top: 1px dashed var(--line); padding: 8px 12px 12px; font-size: 14px; }
+.lb-detail h3 { font-size: 16px; text-transform: uppercase; margin: 8px 0 2px; }
+.brk { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; }
+.brk .v { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+.mk { display: inline-block; width: 18px; font-weight: 800; }
+.mk.hit { color: var(--field); } .mk.miss { color: var(--miss); } .mk.pend { color: var(--muted); }
+.tag { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 2px 6px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); margin-left: 6px; vertical-align: middle; }
+.how { color: var(--muted); font-size: 14px; }
+.prose h2 { font-size: 24px; text-transform: uppercase; margin: 18px 0 6px; }
+.prose li, .prose p { max-width: 65ch; }
+.jump { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+.jump a { font-size: 13px; font-weight: 700; text-decoration: none; color: var(--ink); border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 10px; }
+.jump a.done { border-color: var(--field); }
+.jump a.lk { color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">Family Football · Thanksgiving 2026</div>
+    <h1>Turkey Day Pick'em</h1>
+    <div class="meta">9 games · 46 picks · Thu Nov 26 – Fri Nov 27</div>
+  </header>
+  <nav class="tabs" id="tabs" aria-label="Sections"></nav>
+  <main id="main"></main>
+</div>
+<div class="savebar" id="savebar" hidden>
+  <div class="in"><div class="sum" id="savesum"></div><button class="btn" id="savebtn" type="button">Save</button></div>
+</div>
+<script>
+"use strict";
+// ================= CONFIG =================
+// Lines frozen Thu Nov 26 morning. kick = kickoff in epoch ms (UTC). Picks for a game lock at kickoff.
+const GAMES = [
+  { id: "g1", chip: "CHI–DET", lg: "NFL", away: "Bears", home: "Lions", kick: 1795716000000, tv: "CBS",
+    ml: { a: 9, h: 11 }, spread: { fav: "a", line: 2.5 }, total: { mu: 55.5, sd: 13.5, range: 14, step: 1 },
+    props: [
+      { id: "p1", type: "yn", label: "Amon-Ra St. Brown anytime TD", y: 9, n: 12 },
+      { id: "p2", type: "yn", label: "Colston Loveland anytime TD", y: 12, n: 9 },
+      { id: "p3", type: "ou", label: "Caleb Williams passing yards", mu: 261.5, sd: 55, range: 80, step: 5 } ] },
+  { id: "g2", chip: "PHI–DAL", lg: "NFL", away: "Eagles", home: "Cowboys", kick: 1795728600000, tv: "FOX",
+    ml: { a: 19, h: 5 }, spread: { fav: "h", line: 8.5 }, total: { mu: 47.5, sd: 13.5, range: 14, step: 1 },
+    props: [
+      { id: "p1", type: "ou", label: "Dak Prescott passing yards", mu: 259.5, sd: 55, range: 80, step: 5 },
+      { id: "p2", type: "yn", label: "Dak Prescott throws an INT", y: 11, n: 9 },
+      { id: "p3", type: "yn", label: "Javonte Williams anytime TD", y: 8, n: 12 } ] },
+  { id: "g3", chip: "TCU–TTU", lg: "College", away: "TCU", home: "#11 Texas Tech", kick: 1795741200000, tv: "ESPN",
+    ml: { a: 21, h: 5 }, spread: { fav: "h", line: 15.5 }, total: { mu: 46.5, sd: 16, range: 17, step: 1 }, props: [] },
+  { id: "g4", chip: "KC–BUF", lg: "NFL", away: "Chiefs", home: "Bills", kick: 1795742400000, tv: "NBC",
+    ml: { a: 12, h: 9 }, spread: { fav: "h", line: 2.5 }, total: { mu: 47.5, sd: 13.5, range: 14, step: 1 },
+    props: [
+      { id: "p1", type: "yn", label: "Josh Allen throws an INT", y: 9, n: 11 },
+      { id: "p2", type: "yn", label: "Patrick Mahomes passing TDs", yl: "Over 1.5", nl: "Under 1.5", y: 10, n: 10 },
+      { id: "p3", type: "ou", label: "Josh Allen rushing yards", mu: 36.5, sd: 18, range: 25, step: 1 },
+      { id: "p4", type: "ou", label: "Patrick Mahomes passing yards", mu: 236.5, sd: 55, range: 80, step: 5 } ] },
+  { id: "g5", chip: "NEB–IOWA", lg: "College", away: "Nebraska", home: "#13 Iowa", kick: 1795798800000, tv: "CBS",
+    ml: { a: 13, h: 7 }, spread: { fav: "h", line: 4.5 }, total: { mu: 40.5, sd: 16, range: 17, step: 1 },
+    props: [
+      { id: "p1", type: "ou", label: "Anthony Colandrea (NEB) passing yards", mu: 205.5, sd: 60, range: 80, step: 5 },
+      { id: "p2", type: "ou", label: "Hank Brown (IOWA) passing yards", mu: 145.5, sd: 50, range: 70, step: 5 },
+      { id: "p3", type: "yn", label: "Colandrea passing TDs", yl: "Over 1.5", nl: "Under 1.5", y: 11, n: 9 },
+      { id: "p4", type: "yn", label: "Jamal Rule (NEB) anytime TD", y: 11, n: 9 },
+      { id: "p5", type: "yn", label: "Kwazi Gilmer (NEB) anytime TD", y: 14, n: 7 },
+      { id: "p6", type: "yn", label: "Kamari Moulton (IOWA) anytime TD", y: 14, n: 7 } ] },
+  { id: "g6", chip: "MSST–MISS", lg: "College", away: "Mississippi State", home: "Ole Miss", kick: 1795798800000, tv: "ABC",
+    ml: { a: 26, h: 4 }, spread: { fav: "h", line: 19.5 }, total: { mu: 56.5, sd: 16, range: 17, step: 1 }, props: [] },
+  { id: "g7", chip: "DEN–PIT", lg: "NFL", away: "Broncos", home: "Steelers", kick: 1795809600000, tv: "Prime Video",
+    ml: { a: 8, h: 12 }, spread: { fav: "a", line: 2.5 }, total: { mu: 38.5, sd: 13.5, range: 14, step: 1 },
+    props: [
+      { id: "p1", type: "ou", label: "Bo Nix passing yards", mu: 214.5, sd: 50, range: 75, step: 5 },
+      { id: "p2", type: "yn", label: "Jonah Coleman (DEN) anytime TD", y: 10, n: 10 },
+      { id: "p3", type: "yn", label: "Jaylen Warren (PIT) anytime TD", y: 17, n: 6 } ] },
+  { id: "g8", chip: "UF–FSU", lg: "College", away: "#20 Florida", home: "Florida State", kick: 1795811400000, tv: "ABC",
+    ml: { a: 7, h: 14 }, spread: { fav: "a", line: 6.5 }, total: { mu: 53.5, sd: 16, range: 17, step: 1 }, props: [] },
+  { id: "g9", chip: "TEX–A&M", lg: "College", away: "#3 Texas", home: "Texas A&M", kick: 1795825800000, tv: "ABC",
+    ml: { a: 6, h: 18 }, spread: { fav: "a", line: 10.5 }, total: { mu: 40.5, sd: 16, range: 17, step: 1 }, props: [], tiebreak: true },
+];
+const LOCK_EARLY_MS = 60000; // the page locks each game 1 minute before kickoff
+const FIREBASE_CONFIG = {apiKey:"AIzaSyD_z-pHLSwp2Hh5yhUEe2ayBKr4TZ9FpbY",authDomain:"xc-pickem.firebaseapp.com",projectId:"xc-pickem",storageBucket:"xc-pickem.firebasestorage.app",messagingSenderId:"370970546265",appId:"1:370970546265:web:d324eb443f6c510fdce148"};
+const COLL = "tg";
+
+// ================= MATH =================
+function erf(x) { const s = Math.sign(x); x = Math.abs(x); const t = 1 / (1 + 0.3275911 * x);
+  const y = 1 - (((((1.061405429 * t - 1.453152014) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x); return s * y; }
+const Phi = z => 0.5 * (1 + erf(z / Math.SQRT2));
+const ptsFromP = p => Math.max(1, Math.round(10 * Math.sqrt((1 - p) / p)));
+function ouPts(cfg, line, side) {
+  let pOver = 1 - Phi((line - cfg.mu) / cfg.sd);
+  pOver = Math.min(0.98, Math.max(0.02, pOver));
+  return ptsFromP(side === "o" ? pOver : 1 - pOver);
+}
+function ouBounds(cfg) { const k = Math.floor(cfg.range / cfg.step); return { min: cfg.mu - k * cfg.step, max: cfg.mu + k * cfg.step }; }
+function clampLine(cfg, l) {
+  const b = ouBounds(cfg); if (typeof l !== "number" || !isFinite(l)) return cfg.mu;
+  const k = Math.round((l - cfg.mu) / cfg.step); return Math.min(b.max, Math.max(b.min, cfg.mu + k * cfg.step));
+}
+
+// ================= PICK MODEL =================
+// One game pick object: { ml: "a"|"h"|null, sp: "a"|"h"|null, tot: {s:"o"|"u"|null, l:Number}, p1..: "y"|"n"|null or {s,l}, tb: Number|null }
+function blankGame(g) {
+  const o = { ml: null, sp: null, tot: { s: null, l: g.total.mu } };
+  g.props.forEach(p => { o[p.id] = p.type === "ou" ? { s: null, l: p.mu } : null; });
+  if (g.tiebreak) o.tb = null;
+  return o;
+}
+function cleanGame(g, raw) { // sanitize anything loaded from storage/server
+  const o = blankGame(g); if (!raw || typeof raw !== "object") return o;
+  if (raw.ml === "a" || raw.ml === "h") o.ml = raw.ml;
+  if (raw.sp === "a" || raw.sp === "h") o.sp = raw.sp;
+  if (raw.tot && typeof raw.tot === "object") { o.tot.s = (raw.tot.s === "o" || raw.tot.s === "u") ? raw.tot.s : null; o.tot.l = clampLine(g.total, raw.tot.l); }
+  g.props.forEach(p => {
+    const v = raw[p.id];
+    if (p.type === "ou") { if (v && typeof v === "object") o[p.id] = { s: (v.s === "o" || v.s === "u") ? v.s : null, l: clampLine(p, v.l) }; }
+    else if (v === "y" || v === "n") o[p.id] = v;
+  });
+  if (g.tiebreak && typeof raw.tb === "number" && isFinite(raw.tb) && raw.tb >= 0 && raw.tb <= 200) o.tb = Math.round(raw.tb);
+  return o;
+}
+function picksIn(g, o) { // list of {key,label,text,pts} for filled picks
+  const out = []; if (!o) return out;
+  const nm = s => s === "a" ? g.away : g.home;
+  if (o.ml) out.push({ key: "ml", label: "Winner", text: nm(o.ml), pts: g.ml[o.ml] });
+  if (o.sp) { const favSide = g.spread.fav; out.push({ key: "sp", label: "Spread", text: nm(o.sp) + " " + (o.sp === favSide ? "−" : "+") + g.spread.line, pts: 10 }); }
+  if (o.tot && o.tot.s) out.push({ key: "tot", label: "Total", text: (o.tot.s === "o" ? "Over " : "Under ") + o.tot.l, pts: ouPts(g.total, o.tot.l, o.tot.s) });
+  g.props.forEach(p => {
+    const v = o[p.id];
+    if (p.type === "ou" && v && v.s) out.push({ key: p.id, label: p.label, text: (v.s === "o" ? "Over " : "Under ") + v.l, pts: ouPts(p, v.l, v.s) });
+    if (p.type === "yn" && v) out.push({ key: p.id, label: p.label, text: v === "y" ? (p.yl || "Yes") : (p.nl || "No"), pts: v === "y" ? p.y : p.n });
+  });
+  return out;
+}
+const pickCount = g => 3 + g.props.length;
+const TOTAL_PICKS = GAMES.reduce((a, g) => a + pickCount(g), 0);
+
+// ================= GRADING =================
+// results: { g1: { a: 24, h: 27, final: true, p1: true, p3: 245 }, ... }  yn props = true/false; ou props = number
+function gradeGame(g, o, r) { // returns [{key,label,text,pts,status:"hit"|"miss"|"pend"|"push"}]
+  return picksIn(g, o).map(x => {
+    let st = "pend";
+    if (r && r.final && typeof r.a === "number" && typeof r.h === "number") {
+      const margin = r.h - r.a;
+      if (x.key === "ml") st = margin === 0 ? "push" : ((margin > 0 ? "h" : "a") === o.ml ? "hit" : "miss");
+      else if (x.key === "sp") { const favMargin = g.spread.fav === "h" ? margin : -margin; const favCovers = favMargin > g.spread.line; st = (o.sp === g.spread.fav) === favCovers ? "hit" : "miss"; }
+      else if (x.key === "tot") { const t = r.a + r.h; st = t === o.tot.l ? "push" : ((t > o.tot.l) === (o.tot.s === "o") ? "hit" : "miss"); }
+    }
+    const p = g.props.find(q => q.id === x.key);
+    if (p && r && r[p.id] != null) {
+      const v = r[p.id];
+      if (p.type === "yn" && typeof v === "boolean") st = (v === (o[p.id] === "y")) ? "hit" : "miss";
+      if (p.type === "ou" && typeof v === "number") { const l = o[p.id].l; st = v === l ? "push" : ((v > l) === (o[p.id].s === "o") ? "hit" : "miss"); }
+    }
+    return Object.assign({}, x, { status: st, earned: st === "hit" ? x.pts : 0 });
+  });
+}
+</script>
+<script>
+(function () {
+  "use strict";
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const QS = new URLSearchParams(location.search);
+  const MOCK = QS.get("mock") === "1";
+  const CLOCK_OFFSET = (MOCK && QS.get("now")) ? (+QS.get("now") - Date.now()) : 0;
+  const now = () => Date.now() + CLOCK_OFFSET;
+  const lockAt = g => g.kick - LOCK_EARLY_MS;
+  const isLocked = g => now() >= lockAt(g);
+  const fmtKick = ms => new Date(ms).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
+  const LS = "tgpe-v1" + (MOCK ? "-" + (QS.get("uid") || "me") : "");
+
+  const S = { db: null, uid: null, draft: null, dirty: false, saving: false, saveAgain: false, lastSaved: 0, saveErr: "", loadedMine: false,
+    entries: new Map(), boardSub: null, results: {}, tab: "picks", open: {}, conn: "connecting", timer: null };
+
+  function blankDraft() { const d = { name: "", g: {} }; GAMES.forEach(g => d.g[g.id] = blankGame(g)); return d; }
+  function cleanDraft(raw) { const d = blankDraft(); if (!raw) return d; d.name = typeof raw.name === "string" ? raw.name.slice(0, 24) : "";
+    const src = raw.g || raw; GAMES.forEach(g => d.g[g.id] = cleanGame(g, src[g.id])); return d; }
+  S.draft = blankDraft();
+  try { const j = JSON.parse(localStorage.getItem(LS) || "null"); if (j && j.d) { S.draft = cleanDraft(j.d); S.dirty = !!j.dirty; } } catch (e) {}
+  const keepLocal = () => { try { localStorage.setItem(LS, JSON.stringify({ d: S.draft, dirty: S.dirty })); } catch (e) {} };
+
+  // ---------- counting ----------
+  function filled(d) { let n = 0; GAMES.forEach(g => n += picksIn(g, d.g[g.id]).length); return n; }
+  function maxPts(d) { let n = 0; GAMES.forEach(g => picksIn(g, d.g[g.id]).forEach(x => n += x.pts)); return n; }
+  const gameDone = (g, o) => picksIn(g, o).length === pickCount(g);
+
+  // ---------- tabs ----------
+  function renderTabs() {
+    const tabs = [["picks", "My picks"], ["board", "Leaderboard"], ["rules", "Rules"]];
+    $("#tabs").innerHTML = tabs.map(([id, t]) => `<a href="#${id}" ${S.tab === id ? 'aria-current="page"' : ""}>${t}</a>`).join("");
+  }
+
+  // ---------- picks ----------
+  function optBtn(act, val, title, sub, pts, pressed, dis, st) {
+    const cls = st === "hit" ? " hit" : st === "miss" ? " miss" : "";
+    return `<button type="button" class="opt${pressed ? cls : ""}" data-act="${act}" data-val="${esc(val)}" aria-pressed="${pressed}" ${dis ? "disabled" : ""}>
+      <span class="t">${esc(title)}${sub ? `<small>${esc(sub)}</small>` : ""}</span><span class="pill">${pts}<small>pts</small></span></button>`;
+  }
+  function stOf(graded, key) { const x = graded.find(y => y.key === key); return x ? x.status : null; }
+  function ouRow(g, key, cfg, label, val, dis, graded, resText) {
+    const b = ouBounds(cfg), id = g.id + "-" + key;
+    const st = stOf(graded, key);
+    return `<div class="row"><div class="rl"><span>${esc(label)}</span>${resText ? `<span class="res">${esc(resText)}</span>` : (!dis && val.l !== cfg.mu ? `<button type="button" class="reset" data-act="reset" data-val="${g.id}|${key}">Reset to ${cfg.mu}</button>` : `<span class="res" style="font-weight:400">Book line ${cfg.mu}</span>`)}</div>
+      ${dis ? "" : `<div class="slider"><output id="o-${id}" class="num">${val.l}</output>
+        <button type="button" class="step" data-act="nudge" data-val="${g.id}|${key}|-1" aria-label="Lower line">−</button>
+        <input type="range" data-ou="${g.id}|${key}" min="${b.min}" max="${b.max}" step="${cfg.step}" value="${val.l}" aria-label="${esc(label)} line">
+        <button type="button" class="step" data-act="nudge" data-val="${g.id}|${key}|1" aria-label="Raise line">+</button></div>`}
+      <div class="two">
+        ${optBtn("side", g.id + "|" + key + "|o", "Over " + val.l, "", `<span id="po-${id}">${ouPts(cfg, val.l, "o")}</span>`, val.s === "o", dis, st)}
+        ${optBtn("side", g.id + "|" + key + "|u", "Under " + val.l, "", `<span id="pu-${id}">${ouPts(cfg, val.l, "u")}</span>`, val.s === "u", dis, st)}
+      </div></div>`;
+  }
+  function gameCard(g) {
+    const o = S.draft.g[g.id], dis = isLocked(g), r = S.results[g.id];
+    const graded = gradeGame(g, o, r);
+    const fav = g.spread.fav, favName = fav === "a" ? g.away : g.home, dogName = fav === "a" ? g.home : g.away;
+    const final = r && r.final && typeof r.a === "number";
+    const scoreTxt = r && typeof r.a === "number" ? `${g.away} ${r.a}, ${g.home} ${r.h}${r.final ? " · Final" : " · in progress"}` : "";
+    let status;
+    if (final) status = `<span class="score">${esc(scoreTxt)}</span>`;
+    else if (dis) status = `<b>Locked</b> · kicked off ${esc(fmtKick(g.kick))}` + (scoreTxt ? " · " + esc(scoreTxt) : "");
+    else status = `Locks at kickoff: <b>${esc(fmtKick(g.kick))}</b> · ${esc(g.tv)}`;
+    const earned = graded.reduce((a, x) => a + x.earned, 0);
+    let h = `<section class="game${dis ? " locked" : ""}" id="${g.id}"><div class="gh"><h2>${esc(g.away)} @ ${esc(g.home)}</h2><span class="lg">${g.lg}</span></div>
+      <div class="gsub">${status}${graded.some(x => x.status !== "pend") ? ` · <b>you: +${earned}</b>` : ""}</div>`;
+    h += `<div class="row"><div class="rl"><span>Winner</span></div><div class="two">
+      ${optBtn("pick", g.id + "|ml|a", g.away, "", g.ml.a, o.ml === "a", dis, stOf(graded, "ml"))}
+      ${optBtn("pick", g.id + "|ml|h", g.home, "", g.ml.h, o.ml === "h", dis, stOf(graded, "ml"))}</div></div>`;
+    const spA = g.away + " " + (fav === "a" ? "−" : "+") + g.spread.line, spH = g.home + " " + (fav === "h" ? "−" : "+") + g.spread.line;
+    h += `<div class="row"><div class="rl"><span>Spread</span><span class="res" style="font-weight:400">${esc(favName)} must win by ${Math.ceil(g.spread.line)}+</span></div><div class="two">
+      ${optBtn("pick", g.id + "|sp|a", spA, fav === "a" ? "favorite" : "underdog", 10, o.sp === "a", dis, stOf(graded, "sp"))}
+      ${optBtn("pick", g.id + "|sp|h", spH, fav === "h" ? "favorite" : "underdog", 10, o.sp === "h", dis, stOf(graded, "sp"))}</div></div>`;
+    h += ouRow(g, "tot", g.total, "Total points · slide to set your line", o.tot, dis, graded, final ? "Final total: " + (r.a + r.h) : "");
+    g.props.forEach(p => {
+      const rv = r ? r[p.id] : undefined;
+      if (p.type === "ou") h += ouRow(g, p.id, p, p.label, o[p.id], dis, graded, typeof rv === "number" ? "Result: " + rv : "");
+      else h += `<div class="row"><div class="rl"><span>${esc(p.label)}</span>${typeof rv === "boolean" ? `<span class="res">Result: ${rv ? (p.yl || "Yes") : (p.nl || "No")}</span>` : ""}</div><div class="two">
+        ${optBtn("pick", g.id + "|" + p.id + "|y", p.yl || "Yes", "", p.y, o[p.id] === "y", dis, stOf(graded, p.id))}
+        ${optBtn("pick", g.id + "|" + p.id + "|n", p.nl || "No", "", p.n, o[p.id] === "n", dis, stOf(graded, p.id))}</div></div>`;
+    });
+    if (g.tiebreak) h += `<div class="row"><div class="rl"><span>Tiebreaker: total points in this game</span>${final ? `<span class="res">Actual: ${r.a + r.h}</span>` : ""}</div>
+      <input type="number" inputmode="numeric" min="0" max="200" id="tb-${g.id}" data-tb="${g.id}" placeholder="e.g. 41" value="${o.tb == null ? "" : o.tb}" ${dis ? "disabled" : ""}></div>`;
+    return h + `</section>`;
+  }
+  function renderPicks() {
+    const d = S.draft;
+    let h = "";
+    if (S.conn === "nodb") h += `<div class="note">Couldn't connect to the pick sheet. Check your connection and reload. Your picks are kept on this phone in the meantime.</div>`;
+    else if (S.conn === "connecting") h += `<div class="note">Connecting…</div>`;
+    else if (S.conn === "slow") h += `<div class="note">The pick sheet is slow to answer. Your picks are kept on this phone until it does.</div>`;
+    if (S.saveErr) h += `<div class="note">${esc(S.saveErr)}</div>`;
+    h += `<div class="field-row"><label class="lbl" for="nick">Your name on the leaderboard</label><input type="text" id="nick" maxlength="24" autocomplete="off" placeholder="e.g. Uncle Andy" value="${esc(d.name)}"></div>`;
+    h += `<p class="how" style="margin-top:-6px">Picks save automatically. Each game locks at its kickoff, and you can change picks for any game that hasn't started.</p>`;
+    h += `<div class="jump">` + GAMES.map(g => `<a href="#${g.id}" data-jump="${g.id}" class="${isLocked(g) ? "lk" : gameDone(g, d.g[g.id]) ? "done" : ""}">${esc(short(g))}${isLocked(g) ? " 🔒" : gameDone(g, d.g[g.id]) ? " ✓" : ""}</a>`).join("") + `</div>`;
+    h += GAMES.map(gameCard).join("");
+    $("#main").innerHTML = h;
+    updateSaveBar();
+  }
+  const short = g => g.chip;
+  function updateSaveBar() {
+    const bar = $("#savebar");
+    if (S.tab !== "picks") { bar.hidden = true; return; }
+    bar.hidden = false;
+    const d = S.draft;
+    let st;
+    if (!d.name.trim()) st = `<span class="st-bad">Add your name to save</span>`;
+    else if (S.saving) st = "Saving…";
+    else if (S.dirty) st = `<span class="st-bad">Not saved yet</span>`;
+    else if (S.lastSaved || S.loadedMine) st = `<span class="st-ok">✓ Saved</span>`;
+    else st = "";
+    $("#savesum").innerHTML = `<b>${filled(d)}/${TOTAL_PICKS}</b> picked · <b>${maxPts(d)}</b> pts if all hit<br>${st}`;
+    const btn = $("#savebtn");
+    btn.disabled = S.saving || !S.db || !S.uid || !d.name.trim() || !S.dirty;
+    btn.textContent = S.saving ? "Saving…" : S.dirty ? "Save" : "Saved";
+  }
+  function changed() { S.dirty = true; S.saveErr = ""; keepLocal(); updateSaveBar(); scheduleSave(); }
+  function scheduleSave(ms) { clearTimeout(S.timer); S.timer = setTimeout(save, ms == null ? 1200 : ms); }
+
+  async function save() {
+    clearTimeout(S.timer);
+    if (!S.db || !S.uid || !S.dirty) return;
+    const d = S.draft;
+    if (!d.name.trim()) { updateSaveBar(); return; }
+    if (S.saving) { S.saveAgain = true; return; }
+    S.saving = true; S.saveAgain = false; updateSaveBar();
+    const open = GAMES.filter(g => !isLocked(g));
+    const body = { name: d.name.trim().slice(0, 24), uid: S.uid, upd: new Date(now()).toISOString() };
+    open.forEach(g => body[g.id] = JSON.parse(JSON.stringify(d.g[g.id])));
+    const stamp = JSON.stringify(d);
+    try {
+      await S.db.setFields(COLL + "/" + S.uid, body, ["name", "uid", "upd"].concat(open.map(g => g.id)));
+      if (JSON.stringify(S.draft) === stamp) S.dirty = false;
+      S.lastSaved = now(); S.saveErr = ""; keepLocal();
+    } catch (e) {
+      const code = (e && e.code) || "error";
+      if (code === "permission-denied") S.saveErr = "A game just kicked off, so its picks are locked. Your other picks will save on the next try.";
+      else if (code === "unavailable") S.saveErr = "Couldn't reach the pick sheet. Your picks are on this phone; they'll save when you're back online.";
+      else S.saveErr = "Couldn't save (" + code + "). Tap Save to try again.";
+      S.saving = false; render(true);
+      if (code === "permission-denied" || code === "unavailable") scheduleSave(5000);
+      return;
+    }
+    S.saving = false;
+    if (S.saveAgain || S.dirty) scheduleSave(300);
+    if (S.tab === "picks") { updateSaveBar(); const n = $(".note"); if (n && !S.saveErr && /pick sheet|Couldn't|kicked off/.test(n.textContent)) render(true); }
+  }
+
+  // ---------- leaderboard ----------
+  function scoreEntry(e) {
+    let tot = 0, hits = 0, graded = 0; const per = {};
+    GAMES.forEach(g => { const gr = gradeGame(g, e.g[g.id], S.results[g.id]); per[g.id] = gr;
+      gr.forEach(x => { tot += x.earned; if (x.status === "hit") hits++; if (x.status !== "pend") graded++; }); });
+    const g9 = GAMES.find(g => g.tiebreak), r9 = S.results[g9.id];
+    const tbActual = r9 && r9.final && typeof r9.a === "number" ? r9.a + r9.h : null;
+    const tbPick = e.g[g9.id] ? e.g[g9.id].tb : null;
+    const tbDiff = tbActual != null && tbPick != null ? Math.abs(tbPick - tbActual) : Infinity;
+    return { tot, hits, graded, per, tbDiff };
+  }
+  function renderBoard() {
+    const rows = [...S.entries.values()].filter(e => e.name).map(e => ({ e, sc: scoreEntry(e) }));
+    rows.sort((a, b) => b.sc.tot - a.sc.tot || a.sc.tbDiff - b.sc.tbDiff || a.e.name.localeCompare(b.e.name));
+    const gradedGames = GAMES.filter(g => S.results[g.id] && S.results[g.id].final).length;
+    const lockedGames = GAMES.filter(isLocked).length;
+    let h = "";
+    if (S.conn !== "ok" && !S.entries.size) h += `<div class="note">Loading the board…</div>`;
+    h += `<div class="note ${gradedGames ? "ok" : ""}">${rows.length} ${rows.length === 1 ? "player" : "players"} · ${gradedGames}/9 games graded. ` +
+      (lockedGames ? "Tap a name to see their picks for games that have kicked off." : "Everyone's picks stay hidden until each game kicks off.") + `</div>`;
+    if (!rows.length && S.conn === "ok") h += `<p class="how">No entries yet. Make your picks on the first tab.</p>`;
+    let rank = 0, prevKey = null;
+    h += `<div class="lb">` + rows.map((r, i) => {
+      const key = r.sc.tot + "|" + r.sc.tbDiff;
+      if (key !== prevKey) { rank = i + 1; prevKey = key; }
+      const mine = r.e.uid === S.uid, open = S.open[r.e.uid];
+      let det = "";
+      if (open) {
+        const vis = GAMES.filter(g => mine || isLocked(g));
+        det = `<div class="lb-detail">` + (vis.length ? vis.map(g => {
+          const gr = r.sc.per[g.id];
+          const tb = g.tiebreak && r.e.g[g.id] && r.e.g[g.id].tb != null ? `<div><span class="mk pend">·</span>Tiebreaker: ${r.e.g[g.id].tb}</div><div class="v"></div>` : "";
+          return `<h3>${esc(g.away)} @ ${esc(g.home)}</h3><div class="brk">` + (gr.length ? gr.map(x => {
+            const mk = x.status === "hit" ? "✓" : x.status === "miss" ? "✗" : x.status === "push" ? "=" : "·";
+            return `<div><span class="mk ${x.status === "push" ? "pend" : x.status}">${mk}</span>${esc(x.label)}: ${esc(x.text)}</div><div class="v">${x.status === "hit" ? "+" + x.pts : x.status === "pend" ? x.pts : ""}</div>`;
+          }).join("") : `<div class="how">No picks</div><div></div>`) + tb + `</div>`;
+        }).join("") : `<p class="how">Picks show up here as each game kicks off.</p>`) + `</div>`;
+      }
+      return `<div class="lb-row ${rank === 1 && gradedGames ? "first" : ""}"><button type="button" class="lb-top" data-act="open" data-val="${esc(r.e.uid)}" aria-expanded="${!!open}">
+        <span class="rk num">${gradedGames ? rank : "–"}</span>
+        <span class="nm">${esc(r.e.name)}${mine ? '<span class="tag">you</span>' : ""}<small>${filledE(r.e)}/${TOTAL_PICKS} picked${r.sc.graded ? " · " + r.sc.hits + "/" + r.sc.graded + " hit" : ""}</small></span>
+        <span class="tot num">${r.sc.tot}</span></button>${det}</div>`;
+    }).join("") + `</div>`;
+    h += `<p class="how" style="margin-top:12px">Most points after all 9 games wins. Ties are broken by the closest guess at total points in Texas–Texas A&M.</p>`;
+    $("#main").innerHTML = h;
+  }
+  const filledE = e => GAMES.reduce((a, g) => a + picksIn(g, e.g[g.id]).length, 0);
+
+  function renderRules() {
+    const ex = GAMES[0].total;
+    $("#main").innerHTML = `<div class="prose">
+      <h2>How it works</h2>
+      <ul><li>There are 46 picks across 9 games. Type your name, tap your picks, and they <b>save automatically</b>. The bar at the bottom shows ✓ Saved.</li>
+      <li>Each game <b>locks at its kickoff</b>. You can change picks for any game that hasn't started yet, and you can join late and pick only the games that are left.</li>
+      <li>Your picks are tied to <b>this phone and browser</b>. Make and change them on the same device.</li>
+      <li>Nobody can see anyone else's picks for a game until it kicks off.</li>
+      <li>Most points after all 9 games wins. If there's a tie, the closest guess at total points in Texas–Texas A&M wins.</li></ul>
+      <h2>Points</h2>
+      <ul><li><b>Spreads</b> pay 10 either way.</li>
+      <li><b>Winner</b> picks pay based on the betting odds. Taking a favorite pays a little, and taking an upset pays a lot. Eagles over Cowboys pays 19; Cowboys pays 5.</li>
+      <li><b>Over/unders with a slider</b> pay 10 at the sportsbook line. Slide the line to make your pick safer or bolder. A safer line pays less, and a bolder line pays more. For example, the Bears–Lions line is ${ex.mu}: Over ${ex.mu - 7} pays ${ouPts(ex, ex.mu - 7, "o")}, and Over ${ex.mu + 7} pays ${ouPts(ex, ex.mu + 7, "o")}.</li>
+      <li><b>Yes/No props</b> pay based on the betting odds, the same as winners.</li>
+      <li>A wrong pick scores 0, and so does a blank one. No pick can lose you points, so fill everything in.</li></ul>
+      <h2>Fine print</h2>
+      <ul><li>Lines were taken from the sportsbooks Thursday morning and won't change. A few lines are estimates where the books hadn't posted one yet, mostly Nebraska–Iowa props and some college moneylines.</li>
+      <li>Overtime counts. An NFL tie pays 0 for winner picks.</li>
+      <li>Anytime TD means a rushing or receiving TD, or a return TD. A thrown TD doesn't count. If a player doesn't play, his TD pick scores 0 either way.</li>
+      <li>Results come from the official box scores and post within a few minutes of each final.</li></ul></div>`;
+  }
+
+  // ---------- routing ----------
+  function render(keepScroll) {
+    const y = window.scrollY;
+    renderTabs();
+    if (S.tab === "board") renderBoard(); else if (S.tab === "rules") renderRules(); else renderPicks();
+    updateSaveBar();
+    if (keepScroll) window.scrollTo(0, y);
+  }
+  function route() {
+    const h = (location.hash || "").slice(1);
+    if (/^g\d$/.test(h)) { if (S.tab !== "picks") { S.tab = "picks"; render(); } const el = document.getElementById(h); if (el) el.scrollIntoView(); return; }
+    S.tab = ["picks", "board", "rules"].includes(h) ? h : "picks";
+    if (S.tab === "board") subscribeBoard(); else unsubscribeBoard();
+    render(); window.scrollTo(0, 0);
+  }
+  window.addEventListener("hashchange", route);
+  document.addEventListener("click", ev => {
+    const jb = ev.target.closest("[data-jump]");
+    if (jb) { ev.preventDefault(); const el = document.getElementById(jb.dataset.jump); if (el) el.scrollIntoView({ behavior: "smooth" }); return; }
+    const b = ev.target.closest("[data-act]"); if (!b) return;
+    const act = b.dataset.act, val = b.dataset.val;
+    if (act === "open") { S.open[val] = !S.open[val]; renderBoard(); return; }
+    const [gid, key, v] = val.split("|"); const g = GAMES.find(x => x.id === gid); if (!g || isLocked(g)) { if (g) render(true); return; }
+    const o = S.draft.g[gid];
+    if (act === "pick") { o[key] = o[key] === v ? null : v; }
+    else if (act === "side") { const t = o[key]; t.s = t.s === v ? null : v; }
+    else if (act === "reset") { const cfg = key === "tot" ? g.total : g.props.find(p => p.id === key); o[key].l = cfg.mu; }
+    else if (act === "nudge") { const cfg = key === "tot" ? g.total : g.props.find(p => p.id === key); o[key].l = clampLine(cfg, o[key].l + (+v) * cfg.step); }
+    else return;
+    changed(); render(true);
+  });
+  document.addEventListener("input", ev => {
+    const t = ev.target;
+    if (t.id === "nick") { S.draft.name = t.value.slice(0, 24); changed(); return; }
+    if (t.dataset && t.dataset.tb) { const g = GAMES.find(x => x.id === t.dataset.tb); if (isLocked(g)) return; const n = parseInt(t.value, 10);
+      S.draft.g[g.id].tb = isFinite(n) && n >= 0 && n <= 200 ? n : null; changed(); return; }
+    if (t.dataset && t.dataset.ou) {
+      const [gid, key] = t.dataset.ou.split("|"); const g = GAMES.find(x => x.id === gid); if (isLocked(g)) return;
+      const cfg = key === "tot" ? g.total : g.props.find(p => p.id === key);
+      const l = clampLine(cfg, +t.value); S.draft.g[gid][key].l = l;
+      const id = gid + "-" + key;
+      $("#o-" + id).textContent = l; $("#po-" + id).textContent = ouPts(cfg, l, "o"); $("#pu-" + id).textContent = ouPts(cfg, l, "u");
+      const bs = t.closest(".row").querySelectorAll(".opt .t"); if (bs.length === 2) { bs[0].textContent = "Over " + l; bs[1].textContent = "Under " + l; }
+      S.dirty = true; keepLocal(); updateSaveBar();
+    }
+  });
+  document.addEventListener("change", ev => {
+    const t = ev.target;
+    if (t.dataset && t.dataset.ou) { changed(); }
+  });
+  $("#savebtn").addEventListener("click", () => save());
+  // re-render when a game locks, and keep countdown text fresh
+  let lockedNow = GAMES.map(isLocked).join();
+  setInterval(() => { const l = GAMES.map(isLocked).join(); if (l !== lockedNow) { lockedNow = l; const ae = document.activeElement; if (!(ae && ae.id === "nick")) render(true); if (S.dirty) scheduleSave(200); } }, 5000);
+  window.addEventListener("online", () => { if (S.dirty) scheduleSave(200); });
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && S.dirty) save(); });
+
+  // ---------- data ----------
+  function applyMine(v) {
+    if (S.loadedMine) { // keep server truth for locked games
+      let ch = false; GAMES.forEach(g => { if (isLocked(g)) { const c = cleanGame(g, v && v[g.id]); if (JSON.stringify(c) !== JSON.stringify(S.draft.g[g.id])) { S.draft.g[g.id] = c; ch = true; } } });
+      if (ch && S.tab === "picks") render(true); return;
+    }
+    S.loadedMine = true;
+    if (!v) { if (S.dirty) scheduleSave(200); return; }
+    const server = cleanDraft(v);
+    if (S.dirty) { // keep local edits for open games, server for locked ones
+      GAMES.forEach(g => { if (isLocked(g)) S.draft.g[g.id] = server.g[g.id]; });
+      if (!S.draft.name.trim()) S.draft.name = server.name;
+      scheduleSave(200);
+    } else S.draft = server;
+    keepLocal();
+    if (S.tab === "picks" && !(document.activeElement && document.activeElement.id === "nick")) render(true);
+  }
+  function subscribeBoard() {
+    if (S.boardSub || !S.db) return;
+    S.boardSub = S.db.onCollection(COLL, docs => {
+      const m = new Map(); docs.forEach(x => { if (x.data) { const c = cleanDraft(x.data); m.set(x.id, { uid: x.id, name: c.name, g: c.g }); } });
+      S.entries = m; if (S.tab === "board") renderBoard();
+    }, () => { if (S.tab === "board") renderBoard(); });
+  }
+  function unsubscribeBoard() { if (S.boardSub) { try { S.boardSub(); } catch (e) {} S.boardSub = null; } }
+
+  async function connect() {
+    try { S.db = MOCK ? mockDb() : await firebaseDb(); }
+    catch (e) { S.conn = "nodb"; render(true); setTimeout(connect, 8000); return; }
+    S.uid = S.db.uid;
+    let first = true;
+    const slow = setTimeout(() => { if (first) { S.conn = "slow"; if (S.tab === "picks") render(true); } }, 10000);
+    S.db.onDoc(COLL + "/" + S.uid, v => { clearTimeout(slow); if (first) { first = false; S.conn = "ok"; } applyMine(v); updateSaveBar(); }, () => { clearTimeout(slow); S.conn = "slow"; render(true); });
+    if (S.tab === "board") subscribeBoard();
+    render(true);
+  }
+  async function firebaseDb() {
+    const base = (QS.get("fbbase") && QS.get("emu") === "1") ? QS.get("fbbase") : "https://www.gstatic.com/firebasejs/10.12.2";
+    const [appM, authM, fsM] = await Promise.all([import(base + "/firebase-app.js"), import(base + "/firebase-auth.js"), import(base + "/firebase-firestore.js")]);
+    const app = appM.initializeApp(FIREBASE_CONFIG);
+    const auth = authM.getAuth(app), fs = fsM.getFirestore(app);
+    if (QS.get("emu") === "1") { authM.connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true }); fsM.connectFirestoreEmulator(fs, "127.0.0.1", 8080); }
+    const cred = await authM.signInAnonymously(auth);
+    return {
+      uid: cred.user.uid,
+      setFields: (path, body, fields) => fsM.setDoc(fsM.doc(fs, path), body, { mergeFields: fields }),
+      onDoc: (path, next, err) => fsM.onSnapshot(fsM.doc(fs, path), d => next(d.exists() ? d.data() : null), err),
+      onCollection: (path, next, err) => fsM.onSnapshot(fsM.collection(fs, path), q => next(q.docs.map(d => ({ id: d.id, data: d.data() }))), err),
+    };
+  }
+  function mockDb() { // test mode: shared via localStorage across tabs; ?uid= picks identity
+    const uid = QS.get("uid") || "me"; const K = "tgpe-mockdb";
+    const read = () => { try { return JSON.parse(localStorage.getItem(K) || "{}"); } catch (e) { return {}; } };
+    const subs = [];
+    const fire = () => subs.forEach(f => f());
+    window.addEventListener("storage", e => { if (e.key === K) fire(); });
+    return { uid,
+      setFields: async (path, body, fields) => { await new Promise(r => setTimeout(r, 80)); const all = read(); const id = path.split("/")[1];
+        if (QS.get("failsave") === "1") throw { code: "permission-denied" };
+        const cur = all[id] || {}; fields.forEach(f => { if (f in body) cur[f] = body[f]; }); all[id] = cur; localStorage.setItem(K, JSON.stringify(all)); fire(); },
+      onDoc: (path, next) => { const id = path.split("/")[1]; const f = () => next(read()[id] || null); subs.push(f); setTimeout(f, 50); return () => {}; },
+      onCollection: (path, next) => { const f = () => { const all = read(); next(Object.keys(all).map(id => ({ id, data: all[id] }))); }; subs.push(f); setTimeout(f, 50); return () => { const i = subs.indexOf(f); if (i >= 0) subs.splice(i, 1); }; },
+    };
+  }
+  // results.json is published after each game; polled every 30s
+  async function pollResults() {
+    try {
+      const r = await fetch((QS.get("results") || "results.json") + "?t=" + Date.now(), { cache: "no-store" });
+      if (r.ok) { const j = await r.json(); const prev = JSON.stringify(S.results); S.results = (j && typeof j === "object") ? j : {};
+        if (JSON.stringify(S.results) !== prev) { const ae = document.activeElement; if (S.tab === "board") renderBoard(); else if (S.tab === "picks" && !(ae && (ae.id === "nick" || ae.type === "range" || ae.type === "number"))) render(true); } }
+    } catch (e) {}
+  }
+  pollResults(); setInterval(pollResults, 30000);
+  route();
+  connect();
+})();
+</script>
+</body>
+</html>
