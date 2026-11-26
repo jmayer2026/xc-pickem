@@ -332,7 +332,7 @@ function gradeGame(g, o, r) { // returns [{key,label,text,pts,status:"hit"|"miss
     else if (S.conn === "connecting") h += `<div class="note">Connecting…</div>`;
     else if (S.conn === "slow") h += `<div class="note">The pick sheet is slow to answer. Your picks are kept on this phone until it does.</div>`;
     if (S.saveErr) h += `<div class="note">${esc(S.saveErr)}</div>`;
-    h += `<div class="field-row"><label class="lbl" for="nick">Your name on the leaderboard</label><input type="text" id="nick" maxlength="24" autocomplete="off" placeholder="e.g. Uncle Andy" value="${esc(d.name)}"></div>`;
+    h += `<div class="field-row"><label class="lbl" for="nick">Your name on the leaderboard</label><input type="text" id="nick" maxlength="24" autocomplete="off" placeholder="e.g. Joe" value="${esc(d.name)}"></div>`;
     h += `<p class="how" style="margin-top:-6px">Picks save automatically. Each game locks at its kickoff, and you can change picks for any game that hasn't started.</p>`;
     h += `<div class="jump">` + GAMES.map(g => `<a href="#${g.id}" data-jump="${g.id}" class="${isLocked(g) ? "lk" : gameDone(g, d.g[g.id]) ? "done" : ""}">${esc(short(g))}${isLocked(g) ? " 🔒" : gameDone(g, d.g[g.id]) ? " ✓" : ""}</a>`).join("") + `</div>`;
     h += GAMES.map(gameCard).join("");
