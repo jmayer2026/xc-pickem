@@ -28,5 +28,16 @@
   "a": 27,
   "h": 48,
   "final": true
+ },
+ "g5": {
+  "a": 7,
+  "h": 31,
+  "final": true,
+  "p1": 153,
+  "p2": 173,
+  "p3": false,
+  "p4": true,
+  "p5": false,
+  "p6": false
  }
 }
