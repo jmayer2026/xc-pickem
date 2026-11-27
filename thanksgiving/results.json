@@ -1,4 +1,18 @@
 {
-  "g1": { "a": 39, "h": 35, "final": true, "p1": false, "p2": false, "p3": 345 },
-  "g2": { "a": 39, "h": 38, "final": true, "p1": 291, "p2": true, "p3": true }
+ "g1": {
+  "a": 39,
+  "h": 35,
+  "final": true,
+  "p1": false,
+  "p2": false,
+  "p3": 345
+ },
+ "g2": {
+  "a": 39,
+  "h": 38,
+  "final": true,
+  "p1": 291,
+  "p2": true,
+  "p3": true
+ }
 }
