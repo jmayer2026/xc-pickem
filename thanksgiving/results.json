@@ -39,5 +39,10 @@
   "p4": true,
   "p5": false,
   "p6": false
+ },
+ "g6": {
+  "a": 17,
+  "h": 41,
+  "final": true
  }
 }
