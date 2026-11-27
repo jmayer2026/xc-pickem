@@ -44,5 +44,13 @@
   "a": 17,
   "h": 41,
   "final": true
+ },
+ "g7": {
+  "a": 5,
+  "h": 27,
+  "final": true,
+  "p1": 169,
+  "p2": false,
+  "p3": false
  }
 }
